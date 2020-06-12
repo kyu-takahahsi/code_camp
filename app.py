@@ -511,5 +511,3 @@ def mysql_sample():
     return render_template("Bulletin_board.html", **params)
 
 
-
-a
