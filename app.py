@@ -563,3 +563,5 @@ def regrep():
 
     return render_template('regist_form.html', message=message)
 """
+
+#15章ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
