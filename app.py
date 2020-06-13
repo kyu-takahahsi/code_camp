@@ -534,6 +534,7 @@ def regrep():
 """
 
 #14章課題1
+"""
 @app.route("/regist_form", methods=['GET', 'POST'])
 def regrep():
     message = ""
@@ -568,3 +569,4 @@ def regrep():
             message = 'メールアドレス、パスワードの形式が違います。条件に沿って入力してください'
 
     return render_template('regist_form.html', message=message)
+"""
