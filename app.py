@@ -181,7 +181,7 @@ def post():
 """
 
 
-#12章
+#12章ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
 """
 #例
 @app.route("/mysql_select")
@@ -409,7 +409,7 @@ def mysql_sample():
     return render_template("goods_add.html", **params)
 """
 
-#12章課題3
+#13章ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
 """
 @app.route("/Bulletin_board")
 def mysql_sample():
@@ -420,81 +420,74 @@ def mysql_sample():
 
     add_name = ""
     add_comment = ""
-    serch_name = ""
+    search_name = ""
     message = ""
     judge = ""
+    comment_count = 1
 
     #空欄に値が入力されていたら取得
     if "add_name" in request.args.keys() and "add_comment" in request.args.keys():
         add_name = request.args.get("add_name")
         add_comment = request.args.get("add_comment")
-        print("値：入っています")
 
-    elif "serch_name" in request.args.keys():
-        add_name = request.args.get("add_name")
-        add_comment = request.args.get("add_comment")
-        serch_name = request.args.get("serch_name")
-        print("値：検索します")
+    elif "search_name" in request.args.keys():
+        search_name = request.args.get("search_name")
 
     #空欄のままなら何もしない
     else:
-        print("値：入っていません")
+        pass
 
     try:
         cnx = mysql.connector.connect(host=host, user=username, password=passwd, database=dbname)
         cursor = cnx.cursor()
 
-        #どんな場合でも実行するSQL
-        if serch_name == "":
+        #検索する時に場合に実行するSQL
+        if search_name != "":
+            query = f"SELECT add_name, add_comment, add_time FROM Bulletin_board WHERE add_name = '{search_name}' ORDER BY add_time DESC"
+
+
+        #通常実行するSQL
+        else:
             query = "SELECT add_name, add_comment, add_time FROM Bulletin_board ORDER BY add_time DESC"
 
-        else:
-            query = f"SELECT add_name, add_comment, add_time FROM Bulletin_board WHERE add_name = '{serch_name}' ORDER BY add_time DESC"
 
-
-        #追加が空欄の時
-        if add_name == "" and add_comment == "" and serch_name == "":
+        #追加が空欄の場合
+        if add_name == "" and add_comment == "" and search_name == "":
             cursor.execute(query)
-            judge = "追加したい名前、コメントもしくは検索したい名前を入力してください"
-            print("SQL:値が入っていないので実行できません")
+            judge = "発言なら名前とコメント、 検索なら名前を入力してください"
 
+        #条件通りadd_nameが文字列、add_priceが数字の場合
+        elif  1 <= len(add_name) <= 20 and 1 <= len(add_comment) <=100:
+            add_query = f"INSERT INTO Bulletin_board (add_name, add_comment, add_time) VALUES ('{add_name}', '{add_comment}', LOCALTIME())"
+            cursor.execute(add_query)
+            cnx.commit()
+            cursor.execute(query)
+            judge = "追加成功：コメントが正常に追加されました"
+
+        #検索が空欄ではないとき
+        elif search_name != "":
+            cursor.execute(query)
+            judge = "検索結果"
+            comment_count -= 1
+
+        #エラーになる場合
         else:
-            #検索が空欄ではないとき
-            if serch_name != "":
-                cursor.execute(query)
-                judge = "検索結果です"
-
-            #名前、コメントがNoneで検索が""
-            elif add_name == None and add_comment == None and serch_name == "":
-                cursor.execute(query)
-                judge = "追加したい名前、コメントもしくは検索したい名前を入力してください"
-
-            #条件通りadd_nameが文字列、add_priceが数字の場合
-            elif 1 <= len(add_name) <= 20 and 1 <= len(add_comment) <=100:
-                add_query = f"INSERT INTO Bulletin_board (add_name, add_comment, add_time) VALUES ('{add_name}', '{add_comment}', LOCALTIME())"
-                cursor.execute(add_query)
-                cnx.commit()
-                cursor.execute(query)
-                judge = "追加成功"
-                print("コメント：追加完了")
-
             #条件に当てはまらない場合
-            elif add_name != "":
+            if add_name != "":
                 cursor.execute(query)
                 judge = "追加失敗：コメントを入力してください"
-                print("コメント：追加失敗")
 
             #条件に当てはまらない場合
             else:
                 cursor.execute(query)
                 judge = "追加失敗：名前を入力してください"
-                print("コメント：追加失敗")
 
 
         message = []
         for (name, comment, time) in cursor:
             item = {"name": name, "comment" : comment, "time" : time}
             message.append(item)
+            comment_count +=1
 
         params = {
         "judge" : judge,
@@ -511,10 +504,10 @@ def mysql_sample():
     else:
         cnx.close()
 
-    return render_template("Bulletin_board.html", **params)
+    return render_template("Bulletin_board.html", comment_count=comment_count, **params)
 """
 
-#14章
+#14章ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
 """
 @app.route("/regrep", methods=['GET', 'POST'])
 def regrep():
