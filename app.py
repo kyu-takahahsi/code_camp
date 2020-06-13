@@ -10,6 +10,8 @@ import random
 #データベース操作
 import mysql.connector
 from mysql.connector import errorcode
+#正規表現
+import re
 
 #7章ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
 """
@@ -408,6 +410,7 @@ def mysql_sample():
 """
 
 #12章課題3
+"""
 @app.route("/Bulletin_board")
 def mysql_sample():
     host = 'localhost' # データベースのホスト名又はIPアドレス
@@ -509,5 +512,59 @@ def mysql_sample():
         cnx.close()
 
     return render_template("Bulletin_board.html", **params)
+"""
+
+#14章
+"""
+@app.route("/regrep", methods=['GET', 'POST'])
+def regrep():
+    message = ""
+    phone_number = ""
+    if "phone_number" in request.form.keys():
+        phone_number = request.form["phone_number"]
+
+        if len(phone_number)==0 :
+            message =  '携帯電話番号を入力してください。'
+        elif re.match('^[0-9]{3}-[0-9]{4}-[0-9]{4}$', phone_number):
+           message = 'あなたの携帯電話番号は「' + phone_number + '」です'
+        else:
+            message = '形式が違います。xxx-xxxx-xxxxの形式の数値で入力してください'
+
+    return render_template('regrep.html', phone_number=phone_number, message=message)
+"""
+
+#14章課題1
+@app.route("/regist_form", methods=['GET', 'POST'])
+def regrep():
+    message = ""
+    mail = ""
+    password = ""
+
+    #もし値が入力されていれば値を変数に代入
+    if "mail" in request.form.keys() and "password" in request.form.keys():
+        mail = request.form["mail"]
+        password = request.form["password"]
 
 
+    #入力された形式が正しい([0-9]：半角数字、\d：全角)
+    if re.search(r'[a-z]@[a-z]', mail) and re.fullmatch(r'[0-9a-z]{6,18}', password):
+       message = '登録完了'
+    #フォームが両方とも空欄
+    elif len(mail)==0 and len(password)==0:
+        message =  'メールアドレスとパスワードを入力してください。'
+    #フォームのメールアドレスが空欄
+    elif len(mail)==0 :
+        message =  'メールアドレスを入力してください。'
+    #フォームのパスワードが空欄
+    elif len(password)==0 :
+        message =  'パスワードを入力してください。'
+    #入力された形式が間違えている
+    else:
+        if re.search(r'[a-z]@[a-z]', mail):
+            message = 'パスワードの形式が違います。条件に沿って入力してください'
+        elif re.fullmatch(r'[0-9a-z]{6,18}', password):
+            message = 'メールアドレスの形式が違います。条件に沿って入力してください'
+        else:
+            message = 'メールアドレス、パスワードの形式が違います。条件に沿って入力してください'
+
+    return render_template('regist_form.html', message=message)
