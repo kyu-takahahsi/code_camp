@@ -13,3 +13,13 @@ mysql -u root -p
 export FLASK_APP=app
 export FLASK_ENV=development
 flask run
+
+bad interpreter:No such file or directoryの時お明日を確認する
+sudo vi /Users/kytakahashi/Downloads/my_project/venv/bin/flask
+
+requirements.txtに記述されているのパッケージを一括インストール
+pip install -r requirements.txt
+
+仮想環境構築、アクティブ
+python3 -m venv venv
+. venv/bin/activate

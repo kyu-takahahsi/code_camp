@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+   <meta charset="UTF-8">
+   <title>サンプル</title>
+   <style type="text/css">
+       table, td, th {
+           border: solid black 1px;
+       }
+       table {
+           width: 600px;
+       }
+       p {
+           font-size: 10px
+       }
+       hr {
+            border-width: 1px 0px 0px 0px;
+            border-style: dashed;
+            border-color: black;
+            height: 10px;
+        }
+   </style>
+</head>
+<body>
+    <h2>{{judge}}</h2>
+    <form method="POST" enctype="multipart/form-data">
+        <label>名前　：<input type="text" name="add_name"></label><br>
+        <label>値段　：<input type="text" name="add_price"></label><br>
+        <label>個数　：<input type="text" name="add_number"></label><br>
+        <p>＊全ての項目が入力選択必須</p>
+        <p>＊商品の値段、在庫数は1以上</p>
+        <input type="file" name="goods_image">
+        <p>＊画像ファイルはJPEGもしくはPNGのみ</p>
+        <select name="selector">
+        <option value="" {% if nothing_check %} checked {% endif %}>選択してください</option>
+        <option value="public" {% if public_check %} checked {% endif %}>公開</option>
+        <option value="private" {% if private_check %} checked {% endif %}>非公開</option>
+        </select>
+        <p>公開、非公開を選択</p>
+        <input type="submit" value="商品追加">
+    </form>
+    <hr>
+    <h3>≪商品情報変更≫</h3>
+    <form>
+    </form>
+    <table>
+        <tr>
+           <th>名前</th>
+           <th>コメント</th>
+           <th>投稿時刻</th>
+        </tr>
+
+       {% for item in goods %}
+        <tr>
+            <td>{{ item.image }}</td>
+            <td>{{ item.name }}</td>
+            <td>{{ item.price }}</td>
+            <td>{{ item.number }}</td>
+            <td>{{ item.status }}</td>
+        </tr>
+       {% endfor %}
+    </table>
+</body>
+</html>

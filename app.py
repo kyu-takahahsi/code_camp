@@ -563,7 +563,8 @@ def regrep():
     return render_template('regist_form.html', message=message)
 """
 
-#16章ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+#17章ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+"""
 @app.route("/transaction", methods=["GET", "POST"])
 def transaction():
     host = 'localhost' # データベースのホスト名又はIPアドレス
@@ -616,3 +617,90 @@ def transaction():
             cnx.close()
 
     return render_template("transaction.html", goods=goods)
+"""
+#18章ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+#管理者画面
+@app.route("/admin")
+def mysql_sample():
+    host = 'localhost' # データベースのホスト名又はIPアドレス
+    username = 'root'  # MySQLのユーザ名
+    passwd   = 'kaA1ybB2ucC3d2c'    # MySQLのパスワード
+    dbname   = 'mydb'    # データベース名
+
+    goods_image = ""
+    add_name = ""
+    add_price = ""
+    add_number = ""
+    goods_image = ""
+    goods = ""
+    message = ""
+    goods_count = 0
+    judge = ""
+
+
+
+    #空欄に値が入力されていたら取得
+    if "goods_image" in request.args.keys() and "add_name" in request.args.keys() and "add_price" in request.args.keys() and "add_number" in request.args.keys() and "status_selector" in request.args.keys():
+        goods_image = request.args.get("goods_image")
+        add_name = request.args.get("add_name")
+        add_price = request.args.get("add_price")
+        add_number = request.args.get("add_number")
+        status_selector = request.args.get("status_selector")
+        judge = "OK"
+
+    try judge == "OK":
+        cnx = mysql.connector.connect(host=host, user=username, password=passwd, database=dbname)
+        cursor = cnx.cursor()
+
+        #常時実行するSQL
+        query = "SELECT goods_image, add_name, add_price, stock, status FROM Bulletin_board ORDER BY add_number"
+
+
+        #追加が空欄の場合
+        if add_name == "" and add_price == "" and  == "":
+            cursor.execute(query)
+            message = "発言なら名前とコメント、 検索なら名前を入力してください"
+
+        #条件通りadd_nameが文字列、add_priceが数字の場合
+        elif  1 <= len(add_name) <= 20 and 1 <= len(add_price) <=100:
+            add_query = f"INSERT INTO Bulletin_board (add_name, add_comment, add_time) VALUES ('{add_name}', '{add_comment}', LOCALTIME())"
+            cursor.execute(add_query)
+            cnx.commit()
+            cursor.execute(query)
+            message = "追加成功：コメントが正常に追加されました"
+
+        #エラーになる場合
+        else:
+            #条件に当てはまらない場合
+            if add_name != "":
+                cursor.execute(query)
+                message = "追加失敗：コメントを入力してください"
+
+            #条件に当てはまらない場合
+            else:
+                cursor.execute(query)
+                message = "追加失敗：名前を入力してください"
+
+
+        goods = []
+        for (image, name, price, number, selector) in cursor:
+            item = {"image" : image, "name" : name, "price" : price, "number" : number, "selector" : selector}
+            goods.append(item)
+            goods_count +=1
+
+        params = {
+        "message" : message,
+        "goods" : goods
+        }
+
+    except mysql.connector.Error as err:
+        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+            print("ユーザ名かパスワードに問題があります。")
+        elif err.errno == errorcode.ER_BAD_DB_ERROR:
+            print("データベースが存在しません。")
+        else:
+            print(err)
+    else:
+        cnx.close()
+
+    return render_template("admin.html", comment_count=comment_count, **params)

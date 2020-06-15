@@ -245,7 +245,6 @@ JOIN
     ON
         ot.customer_id = ct.customer_id
     ) as order_customer
-
 ON
     goods_order.order_id = order_customer.order_id
 WHERE
@@ -412,5 +411,28 @@ ON
     goods_order.order_id = order_customer.order_id
 GROUP BY customer_name
 ORDER BY total_price DESC;
+
+--18章
+CREATE TABLE drink_table(
+    drink_id INT(255),
+    drink_image LONGBLOB,
+    drink_name VARCHAR(100),
+    price INT(100),
+    edit_date VARCHAR(20),
+    update_date VARCHAR(20),
+    status VARCHAR(10)
+    );
+
+CREATE TABLE stock_table(
+    drink_id INT(255),
+    stock INT(100),
+    edit_date VARCHAR(20),
+    update_date VARCHAR(20)
+    );
+
+CREATE TABLE history_table(
+    drink_id INT(255),
+    order_date VARCHAR(20)
+    );
 
 
