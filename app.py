@@ -1,4 +1,3 @@
-#共通
 from flask import Flask
 app = Flask(__name__)
 #HTMLに反映
@@ -12,6 +11,8 @@ import mysql.connector
 from mysql.connector import errorcode
 #正規表現
 import re
+#時間取得
+import datetime
 
 #7章ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
 """
@@ -423,7 +424,7 @@ def mysql_sample():
     search_name = ""
     message = ""
     judge = ""
-    comment_count = 1
+    comment_count = 0
 
     #空欄に値が入力されていたら取得
     if "add_name" in request.args.keys() and "add_comment" in request.args.keys():
@@ -468,7 +469,6 @@ def mysql_sample():
         elif search_name != "":
             cursor.execute(query)
             judge = "検索結果"
-            comment_count -= 1
 
         #エラーになる場合
         else:
@@ -539,9 +539,8 @@ def regrep():
         mail = request.form["mail"]
         password = request.form["password"]
 
-
     #入力された形式が正しい([0-9]：半角数字、\d：全角)
-    if re.search(r'[a-z]@[a-z]', mail) and re.fullmatch(r'[0-9a-z]{6,18}', password):
+    if re.search(r'[0-9a-z]@[a-z]', mail) and re.fullmatch(r'[0-9a-z]{6,18}', password):
        message = '登録完了'
     #フォームが両方とも空欄
     elif len(mail)==0 and len(password)==0:
@@ -564,4 +563,56 @@ def regrep():
     return render_template('regist_form.html', message=message)
 """
 
-#15章ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+#16章ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+@app.route("/transaction", methods=["GET", "POST"])
+def transaction():
+    host = 'localhost' # データベースのホスト名又はIPアドレス
+    username = 'root'  # MySQLのユーザ名
+    passwd   = 'kaA1ybB2ucC3d2c'    # MySQLのパスワード
+    dbname   = 'mydb'    # データベース名
+    customer_id = 1        # 例題のため顧客は1に固定
+    payment = 'クレジット'   # 例題のため購入方法はクレジットに固定する
+    quantity = 1           # 例題のため数量は1に固定
+    goods = []
+    cnx = None
+    try:
+        cnx = mysql.connector.connect(host=host, user=username, password=passwd, database=dbname)
+        cursor = cnx.cursor()
+        order = ""
+        goods_id = ""
+        if "goods_id" in request.form.keys() :
+            goods_id = request.form["goods_id"]
+
+            try:
+                date = datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+                sql = "INSERT INTO order_table (customer_id, order_date, payment) VALUES({}, '{}', '{}')".format(customer_id, date, payment)
+                cursor.execute(sql)
+                order_id = cursor.lastrowid # insertした値を取得できます。
+
+                sql = "INSERT INTO order_detail_table (order_id, goods_id, quantity) VALUES({}, {}, {})".format(order_id, goods_id, quantity)
+                cursor.execute(sql)
+
+                cnx.commit()
+
+            except mysql.connector.Error:
+                cnx.rollback()
+                raise
+
+        sql = 'SELECT goods_id, goods_name, price FROM goods_table'
+        cursor.execute(sql)
+
+        for (goods_id, goods_name, price) in cursor:
+            item = {"id": goods_id, "name": goods_name, "price":price}
+            goods.append(item)
+    except mysql.connector.Error as err:
+        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+            print("ユーザ名かパスワードに問題があります。")
+        elif err.errno == errorcode.ER_BAD_DB_ERROR:
+            print("データベースが存在しません。")
+        else:
+            print(err)
+    finally:
+        if cnx != None:
+            cnx.close()
+
+    return render_template("transaction.html", goods=goods)

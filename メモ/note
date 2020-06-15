@@ -1,107 +1,27 @@
-正規表現
-[0-9]：半角数字、\d：全角
-match：含まれていれば一致
-→[0-9]{3:7}なら3桁〜7桁が含まれていれば良いので3桁以上の半角数字は一致とみなす
-fullmatch：指定した桁数のみ一致
-→[0-9]{3,7}なら3桁〜7桁の半角数字のみ一致とみなす
+＊13章追加機能
+・検索機能
+　→名前を入力することで一致した名前のコメントのみ表示
+・コメント数表示
+　→データベース上のコメントの数を表示し、検索にも対応
+・エラーの分岐
+　→名前とコメントのエラーを別々にした
 
 
-@app.route("/Bulletin_board")
-def mysql_sample():
-    host = 'localhost' # データベースのホスト名又はIPアドレス
-    username = 'root'  # MySQLのユーザ名
-    passwd   = 'kaA1ybB2ucC3d2c'    # MySQLのパスワード
-    dbname   = 'mydb'    # データベース名
-
-    add_name = ""
-    add_comment = ""
-    search_name = ""
-    message = ""
-    judge = ""
-
-    #空欄に値が入力されていたら取得
-    if "add_name" in request.args.keys() and "add_comment" in request.args.keys():
-        add_name = request.args.get("add_name")
-        add_comment = request.args.get("add_comment")
-
-    elif "search_name" in request.args.keys():
-        #add_name = request.args.get("add_name")
-        #add_comment = request.args.get("add_comment")
-        search_name = request.args.get("search_name")
-
-    #空欄のままなら何もしない
-    else:
-        pass
-
-    try:
-        cnx = mysql.connector.connect(host=host, user=username, password=passwd, database=dbname)
-        cursor = cnx.cursor()
-
-        #どんな場合でも実行するSQL
-        if search_name == "":
-            query = "SELECT add_name, add_comment, add_time FROM Bulletin_board ORDER BY add_time DESC"
-
-        else:
-            query = f"SELECT add_name, add_comment, add_time FROM Bulletin_board WHERE add_name = '{search_name}' ORDER BY add_time DESC"
+＊正規表現
+・[0-9]：半角数字
+・\d、[０-９]：全角数字
+・match：含まれていれば一致
+　→[0-9]{3:7}なら3桁〜7桁が含まれていれば良いので3桁以上の半角数字は一致とみなす
+・fullmatch：指定した桁数のみ一致
+　→[0-9]{3,7}なら3桁〜7桁の半角数字のみ一致とみなす
 
 
-        #追加が空欄の時
-        if add_name == "" and add_comment == "" and search_name == "":
-            cursor.execute(query)
-            judge = "追加したい名前、コメントもしくは検索したい名前を入力してください"
-            print("SQL:値が入っていないので実行できません")
-
-        else:
-            #検索が空欄ではないとき
-            if search_name != "":
-                cursor.execute(query)
-                judge = "検索結果です"
-
-            #名前、コメントがNoneで検索が""
-            elif add_name == None and add_comment == None and search_name == "":
-                cursor.execute(query)
-                judge = "追加したい名前、コメントもしくは検索したい名前を入力してください"
-
-            #条件通りadd_nameが文字列、add_priceが数字の場合
-            elif 1 <= len(add_name) <= 20 and 1 <= len(add_comment) <=100:
-                add_query = f"INSERT INTO Bulletin_board (add_name, add_comment, add_time) VALUES ('{add_name}', '{add_comment}', LOCALTIME())"
-                cursor.execute(add_query)
-                cnx.commit()
-                cursor.execute(query)
-                judge = "追加成功"
-                print("コメント：追加完了")
-
-            #条件に当てはまらない場合
-            elif add_name != "":
-                cursor.execute(query)
-                judge = "追加失敗：コメントを入力してください"
-                print("コメント：追加失敗")
-
-            #条件に当てはまらない場合
-            else:
-                cursor.execute(query)
-                judge = "追加失敗：名前を入力してください"
-                print("コメント：追加失敗")
-
-
-        message = []
-        for (name, comment, time) in cursor:
-            item = {"name": name, "comment" : comment, "time" : time}
-            message.append(item)
-
-        params = {
-        "judge" : judge,
-        "message" : message
-        }
-
-    except mysql.connector.Error as err:
-        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-            print("ユーザ名かパスワードに問題があります。")
-        elif err.errno == errorcode.ER_BAD_DB_ERROR:
-            print("データベースが存在しません。")
-        else:
-            print(err)
-    else:
-        cnx.close()
-
-    return render_template("Bulletin_board.html", **params)
+＊正規化
+・非正規形
+　→正規化がまったく行われておらず、1行の中に「複数の繰り返し項目」が存在するようなテーブルを非正規形と呼びます。
+・第1正規形
+　→非正規形から第1正規化への正規化では、「導出属性の削除」と「繰り返し項目の分離」を行います。
+・第2正規形
+　→第1正規形から第2正規化への正規化では、主キー以外の項目(非キー)の情報に依存している情報の分離を行います。
+・第3正規形
+　→第2正規形から第3正規化への正規化では、主キーに依存しているが、情報として独立できるものを分離します。
