@@ -411,7 +411,7 @@ def mysql_sample():
 """
 
 #13章ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-"""
+
 @app.route("/Bulletin_board")
 def mysql_sample():
     host = 'localhost' # データベースのホスト名又はIPアドレス
@@ -419,11 +419,15 @@ def mysql_sample():
     passwd   = 'kaA1ybB2ucC3d2c'    # MySQLのパスワード
     dbname   = 'mydb'    # データベース名
 
+    #htmlから受け取る変数
     add_name = ""
     add_comment = ""
     search_name = ""
+    #paramsで送る表示するための変数
     message = ""
+    #エラー内容表示
     judge = ""
+    #コメント数表示
     comment_count = 0
 
     #空欄に値が入力されていたら取得
@@ -431,12 +435,14 @@ def mysql_sample():
         add_name = request.args.get("add_name")
         add_comment = request.args.get("add_comment")
 
+    #検索欄に値が入力されていたら取得
     elif "search_name" in request.args.keys():
         search_name = request.args.get("search_name")
 
     #空欄のままなら何もしない
     else:
         pass
+
 
     try:
         cnx = mysql.connector.connect(host=host, user=username, password=passwd, database=dbname)
@@ -446,42 +452,38 @@ def mysql_sample():
         if search_name != "":
             query = f"SELECT add_name, add_comment, add_time FROM Bulletin_board WHERE add_name = '{search_name}' ORDER BY add_time DESC"
 
-
         #通常実行するSQL
         else:
             query = "SELECT add_name, add_comment, add_time FROM Bulletin_board ORDER BY add_time DESC"
 
 
-        #追加が空欄の場合
+        #全てが空欄の場合
         if add_name == "" and add_comment == "" and search_name == "":
-            cursor.execute(query)
             judge = "発言なら名前とコメント、 検索なら名前を入力してください"
 
-        #条件通りadd_nameが文字列、add_priceが数字の場合
+        #条件通りadd_nameが20文字以内、add_commentが100文字以内の場合
         elif  1 <= len(add_name) <= 20 and 1 <= len(add_comment) <=100:
             add_query = f"INSERT INTO Bulletin_board (add_name, add_comment, add_time) VALUES ('{add_name}', '{add_comment}', LOCALTIME())"
             cursor.execute(add_query)
             cnx.commit()
-            cursor.execute(query)
             judge = "追加成功：コメントが正常に追加されました"
 
-        #検索が空欄ではないとき
+        #検索が空欄ではない場合
         elif search_name != "":
-            cursor.execute(query)
             judge = "検索結果"
 
         #エラーになる場合
         else:
-            #条件に当てはまらない場合
+            #コメントが空欄の場合
             if add_name != "":
-                cursor.execute(query)
                 judge = "追加失敗：コメントを入力してください"
 
-            #条件に当てはまらない場合
+            #名前が空欄の場合
             else:
-                cursor.execute(query)
                 judge = "追加失敗：名前を入力してください"
 
+        #コメントを表示するSQL
+        cursor.execute(query)
 
         message = []
         for (name, comment, time) in cursor:
@@ -505,7 +507,7 @@ def mysql_sample():
         cnx.close()
 
     return render_template("Bulletin_board.html", comment_count=comment_count, **params)
-"""
+
 
 #14章ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
 """
@@ -526,7 +528,7 @@ def regrep():
     return render_template('regrep.html', phone_number=phone_number, message=message)
 """
 
-#14章課題1
+#14章課題
 """
 @app.route("/regist_form", methods=['GET', 'POST'])
 def regrep():
@@ -619,6 +621,7 @@ def transaction():
     return render_template("transaction.html", goods=goods)
 """
 #18章ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+"""
 #管理者画面
 @app.route("/admin")
 def mysql_sample():
@@ -704,3 +707,4 @@ def mysql_sample():
         cnx.close()
 
     return render_template("admin.html", comment_count=comment_count, **params)
+"""
