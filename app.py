@@ -411,8 +411,8 @@ def mysql_sample():
 """
 
 #13章ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-
-@app.route("/Bulletin_board")
+"""
+@app.route("/Bulletin_board", methods=['GET', 'POST'])
 def mysql_sample():
     host = 'localhost' # データベースのホスト名又はIPアドレス
     username = 'root'  # MySQLのユーザ名
@@ -431,30 +431,20 @@ def mysql_sample():
     comment_count = 0
 
     #空欄に値が入力されていたら取得
-    if "add_name" in request.args.keys() and "add_comment" in request.args.keys():
-        add_name = request.args.get("add_name")
-        add_comment = request.args.get("add_comment")
+    if "add_name" in request.form.keys() and "add_comment" in request.form.keys():
+        add_name = request.form.get("add_name")
+        add_comment = request.form.get("add_comment")
 
     #検索欄に値が入力されていたら取得
-    elif "search_name" in request.args.keys():
-        search_name = request.args.get("search_name")
-
-    #空欄のままなら何もしない
-    else:
-        pass
+    elif "search_name" in request.form.keys():
+        search_name = request.form.get("search_name")
 
 
     try:
         cnx = mysql.connector.connect(host=host, user=username, password=passwd, database=dbname)
         cursor = cnx.cursor()
-
         #検索する時に場合に実行するSQL
-        if search_name != "":
-            query = f"SELECT add_name, add_comment, add_time FROM Bulletin_board WHERE add_name = '{search_name}' ORDER BY add_time DESC"
-
-        #通常実行するSQL
-        else:
-            query = "SELECT add_name, add_comment, add_time FROM Bulletin_board ORDER BY add_time DESC"
+        query = "SELECT add_name, add_comment, add_time FROM Bulletin_board ORDER BY add_time DESC"
 
 
         #全てが空欄の場合
@@ -468,19 +458,33 @@ def mysql_sample():
             cnx.commit()
             judge = "追加成功：コメントが正常に追加されました"
 
-        #検索が空欄ではない場合
+        #検索する場合
         elif search_name != "":
+            query = f"SELECT add_name, add_comment, add_time FROM Bulletin_board WHERE add_name = '{search_name}' ORDER BY add_time DESC"
             judge = "検索結果"
 
         #エラーになる場合
         else:
             #コメントが空欄の場合
-            if add_name != "":
-                judge = "追加失敗：コメントを入力してください"
+            if add_name == "":
+                judge = "追加失敗：名前を入力してください"
 
             #名前が空欄の場合
-            else:
-                judge = "追加失敗：名前を入力してください"
+            elif add_comment == "":
+                judge = "追加失敗：コメントを入力してください"
+
+            #名前とコメントが条件に合わない場合
+            elif len(add_name) > 20 and len(add_comment) > 100:
+                judge = "追加失敗：20文字以内で名前を、100文字以内コメントを入力してください"
+
+            #コメントが条件に合わない場合
+            elif len(add_comment) > 100:
+                judge = "追加失敗：100文字以内コメントを入力してください"
+
+            #名前が条件に合わない場合
+            elif len(add_name) > 20:
+                judge = "追加失敗：20文字以内で名前を入力してください"
+
 
         #コメントを表示するSQL
         cursor.execute(query)
@@ -507,10 +511,10 @@ def mysql_sample():
         cnx.close()
 
     return render_template("Bulletin_board.html", comment_count=comment_count, **params)
-
+"""
 
 #14章ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-"""
+
 @app.route("/regrep", methods=['GET', 'POST'])
 def regrep():
     message = ""
@@ -526,7 +530,7 @@ def regrep():
             message = '形式が違います。xxx-xxxx-xxxxの形式の数値で入力してください'
 
     return render_template('regrep.html', phone_number=phone_number, message=message)
-"""
+
 
 #14章課題
 """
@@ -564,7 +568,6 @@ def regrep():
 
     return render_template('regist_form.html', message=message)
 """
-
 #17章ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
 """
 @app.route("/transaction", methods=["GET", "POST"])
@@ -630,47 +633,45 @@ def mysql_sample():
     passwd   = 'kaA1ybB2ucC3d2c'    # MySQLのパスワード
     dbname   = 'mydb'    # データベース名
 
-    goods_image = ""
+    add_image = ""
     add_name = ""
     add_price = ""
     add_number = ""
-    goods_image = ""
+    add_image = ""
     goods = ""
     message = ""
     goods_count = 0
-    judge = ""
 
 
 
     #空欄に値が入力されていたら取得
-    if "goods_image" in request.args.keys() and "add_name" in request.args.keys() and "add_price" in request.args.keys() and "add_number" in request.args.keys() and "status_selector" in request.args.keys():
-        goods_image = request.args.get("goods_image")
+    if "add_image" in request.args.keys() and "add_name" in request.args.keys() and "add_price" in request.args.keys() and "add_number" in request.args.keys() and "status_selector" in request.args.keys():
+        add_image = request.args.get("add_image")
         add_name = request.args.get("add_name")
         add_price = request.args.get("add_price")
         add_number = request.args.get("add_number")
         status_selector = request.args.get("status_selector")
-        judge = "OK"
 
-    try judge == "OK":
+    try :
         cnx = mysql.connector.connect(host=host, user=username, password=passwd, database=dbname)
         cursor = cnx.cursor()
 
         #常時実行するSQL
-        query = "SELECT goods_image, add_name, add_price, stock, status FROM Bulletin_board ORDER BY add_number"
+        query = "SELECT add_image, add_name, add_price, stock, status FROM Bulletin_board ORDER BY add_number"
 
 
         #追加が空欄の場合
-        if add_name == "" and add_price == "" and  == "":
+        if add_image == "" and add_name == "" and add_price == "" and add_number == "" and status_selector == "":
             cursor.execute(query)
-            message = "発言なら名前とコメント、 検索なら名前を入力してください"
+            message = "新商品追加"
 
         #条件通りadd_nameが文字列、add_priceが数字の場合
-        elif  1 <= len(add_name) <= 20 and 1 <= len(add_price) <=100:
-            add_query = f"INSERT INTO Bulletin_board (add_name, add_comment, add_time) VALUES ('{add_name}', '{add_comment}', LOCALTIME())"
+        elif add_image != "" and add_name != "" and (add_price.isdecimal() == True and int(add_price) > 0) and (add_number.isdecimal() == True and  int(add_number) > 0) and status_selector != "" :
+            drink_query = f"INSERT INTO drink_table (add_image, add_name, add_price, add_number, status) VALUES ('{add_name}', '{add_price}', LOCALTIME())"
             cursor.execute(add_query)
             cnx.commit()
             cursor.execute(query)
-            message = "追加成功：コメントが正常に追加されました"
+            message = "追加成功：商品が正常に追加されました"
 
         #エラーになる場合
         else:
@@ -680,7 +681,7 @@ def mysql_sample():
                 message = "追加失敗：コメントを入力してください"
 
             #条件に当てはまらない場合
-            else:
+            elif add_name != "":
                 cursor.execute(query)
                 message = "追加失敗：名前を入力してください"
 
