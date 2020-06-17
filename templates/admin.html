@@ -34,8 +34,8 @@
         <p>＊画像ファイルはJPEGもしくはPNGのみ</p>
         <select name="status_selector">
         <option value="" {% if nothing_check %} checked {% endif %}>選択してください</option>
-        <option value="1" {% if public_check %} checked {% endif %}>公開</option>
-        <option value="0" {% if private_check %} checked {% endif %}>非公開</option>
+        <option value=1 {% if public_check %} checked {% endif %}>公開</option>
+        <option value=0 {% if private_check %} checked {% endif %}>非公開</option>
         </select>
         <p>＊公開、非公開を選択</p>
         <input type="submit" value="商品追加">
@@ -54,21 +54,21 @@
         </tr>
        {% for item in goods %}
         <tr>
-            <form method="POST" enctype="multipart/form-data">
             <td><img src={{ item.image }}></td>
             <td>{{ item.name }}</td>
             <td>{{ item.price }}</td>
+            <form method="POST">
             <td>
-                <input type="text" value={{number}}  name="change_number">
+                <input type="text" name="change_number" value={{number}} >
                 <input type="submit" value="変更">
             </td>
             </form>
             <form method="POST">
             <td>
                 {% if item.status == 1 %}
-                <input type="submit"  name=change_status value="公開">
-                {% else %}
-                <input type="submit" name=change_status value="非公開">
+                <button type="submit" name=change_status value={{item.id}}>非公開にする</button>
+                {% elif item.status == 0 %}
+                <button type="submit" name=change_status value={{item.id}}>非公開にする</button>
                 {% endif %}
             </td>
         </form>

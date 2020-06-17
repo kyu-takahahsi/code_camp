@@ -640,8 +640,7 @@ def admin():
     goods = ""
     message = ""
     change_status = ""
-
-
+    update_status = ""
 
     #空欄の値を取得
     add_image = request.files.get("file")
@@ -649,29 +648,34 @@ def admin():
     add_price = request.form.get("add_price")
     add_number = request.form.get("add_number")
     status_selector = request.form.get("status_selector")
-
+    if "change_status" in request.form.keys():
+        change_status = int(request.form.get("change_status"))
 
     try :
         cnx = mysql.connector.connect(host=host, user=username, password=passwd, database=dbname)
         cursor = cnx.cursor()
 
         #常時実行するSQL
-        query = "SELECT DISTINCT dt.drink_image as drink_image, dt.drink_name as drink_name, dt.price as price, st.stock as stock, dt.status as status FROM drink_table as dt LEFT JOIN stock_table as st ON dt.drink_id = st.drink_id"
-        
+        query = "SELECT DISTINCT dt.drink_id as drink_id, dt.drink_image as drink_image, dt.drink_name as drink_name, dt.price as price, st.stock as stock, dt.status as status FROM drink_table as dt LEFT JOIN stock_table as st ON dt.drink_id = st.drink_id"
+        #SQL実行
+        cursor.execute(query)
         #SQLで取得した値を代入
         goods = []
-        for (image, name, price, number, status) in cursor:
-            item = {"image" : image, "name" : name, "price" : price, "number" : number, "status" : status}
+        for (id, image, name, price, number, status) in cursor:
+            item = {"id" : id, "image" : image, "name" : name, "price" : price, "number" : number, "status" : status}
             goods.append(item)
+            print("change_status → " + str(change_status))
+            print("item → " + str(item["id"]))
+            if item["id"] == change_status:
+                update_status = item
+                print("できました！！")
+
 
         #追加が空欄の場合
-        if add_image == None and add_name == None and add_price == None and add_number == None and status_selector == None:
+        if (add_image == None and add_name == None and add_price == None and add_number == None and status_selector == None) or (add_name == "" and add_price == "" and add_number == "" and status_selector == ""):
             message = "新商品追加"
-            print("if")
-
 
         #条件通りadd_nameが文字列、add_priceが数字の場合
-        #add_image != "" and add_name != "" and (add_price.isdecimal() == True and int(add_price) > 0) and (add_number.isdecimal() == True and  int(add_number) > 0) and status_selector != ""
         elif add_image != "" and add_name != "" and add_price != "" and add_number != "" and status_selector != "" :
             drink_query = f"INSERT INTO drink_table (drink_image, drink_name, price, edit_date, update_date, status) VALUES ('{add_image}', '{add_name}', {add_price}, LOCALTIME(), LOCALTIME(), {status_selector})"
             stock_query = f"INSERT INTO stock_table (drink_name, stock, edit_date, update_date) VALUES ('{add_name}', {add_number}, LOCALTIME(), LOCALTIME())"
@@ -681,19 +685,27 @@ def admin():
             cursor.execute(history_query)
             cnx.commit()
             message = "追加成功：商品が正常に追加されました"
-            print("elif")
 
-        #SQL実行
-        cursor.execute(query)
+        #ステータスの変更
+
+        if update_status["status"] == 0:
+            status_update_query = f'UPDATE drink_table SET status = 1 WHERE drink_name = "{update_status["name"]}"'
+            cursor.execute(status_update_query)
+            cnx.commit()
+
+        elif update_status["status"] == 1:
+            status_update_query = f'UPDATE drink_table SET status = 0 WHERE drink_name = "{update_status["name"]}"'
+            cursor.execute(status_update_query)
+            cnx.commit()
+
+
+
+
 
         params = {
         "message" : message,
         "goods" : goods
         }
-
-        if "change_status" in request.form.keys():
-           change_status = request.form.get("status_selector")
-           if change_status == 1:
 
 
     except mysql.connector.Error as err:
@@ -708,7 +720,8 @@ def admin():
 
     return render_template("admin.html", **params)
 
-#購入者画面
+
+#購入者画面-----------------------------------------------------------------
 @app.route("/user", methods=["GET", "POST"])
 def user():
     host = 'localhost' # データベースのホスト名又はIPアドレス
@@ -753,28 +766,33 @@ def user():
             home = "home"
 
         else:
+            #商品が選択されていない
             if my_money == "" and button != "" :
                 message = "自動販売機結果"
                 judge_select = "＊商品を選択してください"
 
+            #金額が入力されていない
             elif my_money != "" and button == "" :
                 message = "自動販売機結果"
                 judge_money = "＊お金を投入してください"
 
+            #金額、商品共に入力されていない
             elif my_money == "" and button == None:
                 judge_money = "＊お金を投入してください"
                 judge_select = "＊商品を選択してください"
 
-            else :
+            else:
+                #金額、商品共に入力されており、足りている
                 if my_money >= bought["price"]:
                     message = "自動販売機結果"
                     judge_money = "＊ガシャコン！！" + bought["name"] + "が買えました！＊"
                     judge_select = "<<<お釣りは" + str(my_money - bought["price"]) + "円です>>>"
                     #在庫数のクエリ
-                    update_query = f'UPDATE stock_table SET stock = {bought["stock"]-1} WHERE drink_name = "{bought["name"]}"'
-                    cursor.execute(update_query)
+                    stock_update_query = f'UPDATE stock_table SET stock = {bought["stock"]-1} WHERE drink_name = "{bought["name"]}"'
+                    cursor.execute(stock_update_query)
                     cnx.commit()
 
+                #金額、商品共に入力されているが、足りていない
                 else:
                     message = "自動販売機結果"
                     judge_money = "＊お金が" + str(bought["price"] - my_money) + "円足りません"
