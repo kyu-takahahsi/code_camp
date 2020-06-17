@@ -80,6 +80,8 @@ CREATE TABLE Bulletin_board(
     add_comment VARCHAR(1000),
     add_time VARCHAR(1000)
     );
+SELECT *
+FROM Bulletin_board;
 
 DELETE FROM Bulletin_board WHERE add_time = "GETDATE()";
 
@@ -414,25 +416,37 @@ ORDER BY total_price DESC;
 
 --18章
 CREATE TABLE drink_table(
-    drink_id INT(255),
+    --drink_id INT AUTO_INCREMENT,
     drink_image LONGBLOB,
-    drink_name VARCHAR(100),
-    price INT(100),
-    edit_date VARCHAR(20),
-    update_date VARCHAR(20),
-    status VARCHAR(10)
-    );
+    drink_name VARCHAR(255),
+    price INT,
+    edit_date DATETIME,
+    update_date DATETIME,
+    status INT,
+    PRIMARY KEY (drink_id)
+);
+
 
 CREATE TABLE stock_table(
-    drink_id INT(255),
-    stock INT(100),
-    edit_date VARCHAR(20),
-    update_date VARCHAR(20)
+    --drink_id INT AUTO_INCREMENT,
+    drink_name VARCHAR(255),
+    stock INT,
+    edit_date DATETIME,
+    update_date DATETIME,
+    PRIMARY KEY (drink_id)
     );
 
 CREATE TABLE history_table(
     drink_id INT(255),
-    order_date VARCHAR(20)
+    order_date DATETIME
     );
 
+--結合
+SELECT dt.drink_image as drink_image, dt.drink_id as drink_id, dt.drink_name as drink_name, dt.price as price, st.stock as stock, dt.status as status FROM drink_table as dt LEFT JOIN stock_table as st ON dt.drink_id = st.drink_id
+
+--INSERT INTO drink_table (add_image, add_name, add_price, add_number, edit_date, update_date, status) VALUES ('{add_image}', '{add_name}', {add_price}, {add_number}, LOCALTIME(), LOCALTIME(), {status_selector})
+--INSERT INTO stock_table (stock, edit_date, update_date) VALUES (stock, LOCALTIME(), LOCALTIME())
+--INSERT INTO history_table (order_date) VALUES (LOCALTIME())
+
+SELECT dt.drink_image as drink_image, dt.drink_name as drink_name, dt.price as price, st.stock as stock FROM drink_table as dt LEFT JOIN stock_table as st ON dt.drink_id = st.drink_id
 

@@ -433,11 +433,8 @@ def mysql_sample():
     #空欄に値が入力されていたら取得
     if "add_name" in request.form.keys() and "add_comment" in request.form.keys():
         add_name = request.form.get("add_name")
-        add_comment = request.form.get("add_comment")
-
-    #検索欄に値が入力されていたら取得
-    elif "search_name" in request.form.keys():
-        search_name = request.form.get("search_name")
+        add_comment = re
+        quest.form.get("add_comment")
 
 
     try:
@@ -452,16 +449,11 @@ def mysql_sample():
             judge = "発言なら名前とコメント、 検索なら名前を入力してください"
 
         #条件通りadd_nameが20文字以内、add_commentが100文字以内の場合
-        elif  1 <= len(add_name) <= 20 and 1 <= len(add_comment) <=100:
+        if  1 <= len(add_name) <= 20 and 1 <= len(add_comment) <=100:
             add_query = f"INSERT INTO Bulletin_board (add_name, add_comment, add_time) VALUES ('{add_name}', '{add_comment}', LOCALTIME())"
             cursor.execute(add_query)
             cnx.commit()
             judge = "追加成功：コメントが正常に追加されました"
-
-        #検索する場合
-        elif search_name != "":
-            query = f"SELECT add_name, add_comment, add_time FROM Bulletin_board WHERE add_name = '{search_name}' ORDER BY add_time DESC"
-            judge = "検索結果"
 
         #エラーになる場合
         else:
@@ -484,6 +476,13 @@ def mysql_sample():
             #名前が条件に合わない場合
             elif len(add_name) > 20:
                 judge = "追加失敗：20文字以内で名前を入力してください"
+
+        #検索欄に値が入力されていたら取得
+        if "search_name" in request.form.keys():
+            search_name = request.form.get("search_name")
+            if search_name != "":
+                query = f"SELECT add_name, add_comment, add_time FROM Bulletin_board WHERE add_name = '{search_name}' ORDER BY add_time DESC"
+                judge = "検索結果"
 
 
         #コメントを表示するSQL
@@ -514,7 +513,7 @@ def mysql_sample():
 """
 
 #14章ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-
+"""
 @app.route("/regrep", methods=['GET', 'POST'])
 def regrep():
     message = ""
@@ -530,7 +529,7 @@ def regrep():
             message = '形式が違います。xxx-xxxx-xxxxの形式の数値で入力してください'
 
     return render_template('regrep.html', phone_number=phone_number, message=message)
-
+"""
 
 #14章課題
 """
@@ -624,10 +623,10 @@ def transaction():
     return render_template("transaction.html", goods=goods)
 """
 #18章ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-"""
+
 #管理者画面
-@app.route("/admin")
-def mysql_sample():
+@app.route("/admin", methods=["GET", "POST"])
+def admin():
     host = 'localhost' # データベースのホスト名又はIPアドレス
     username = 'root'  # MySQLのユーザ名
     passwd   = 'kaA1ybB2ucC3d2c'    # MySQLのパスワード
@@ -637,64 +636,155 @@ def mysql_sample():
     add_name = ""
     add_price = ""
     add_number = ""
-    add_image = ""
+    status_selector = ""
     goods = ""
     message = ""
-    goods_count = 0
+    change_status = ""
 
 
 
-    #空欄に値が入力されていたら取得
-    if "add_image" in request.args.keys() and "add_name" in request.args.keys() and "add_price" in request.args.keys() and "add_number" in request.args.keys() and "status_selector" in request.args.keys():
-        add_image = request.args.get("add_image")
-        add_name = request.args.get("add_name")
-        add_price = request.args.get("add_price")
-        add_number = request.args.get("add_number")
-        status_selector = request.args.get("status_selector")
+    #空欄の値を取得
+    add_image = request.files.get("file")
+    add_name = request.form.get("add_name")
+    add_price = request.form.get("add_price")
+    add_number = request.form.get("add_number")
+    status_selector = request.form.get("status_selector")
+
 
     try :
         cnx = mysql.connector.connect(host=host, user=username, password=passwd, database=dbname)
         cursor = cnx.cursor()
 
         #常時実行するSQL
-        query = "SELECT add_image, add_name, add_price, stock, status FROM Bulletin_board ORDER BY add_number"
-
+        query = "SELECT DISTINCT dt.drink_image as drink_image, dt.drink_name as drink_name, dt.price as price, st.stock as stock, dt.status as status FROM drink_table as dt LEFT JOIN stock_table as st ON dt.drink_id = st.drink_id"
+        
+        #SQLで取得した値を代入
+        goods = []
+        for (image, name, price, number, status) in cursor:
+            item = {"image" : image, "name" : name, "price" : price, "number" : number, "status" : status}
+            goods.append(item)
 
         #追加が空欄の場合
-        if add_image == "" and add_name == "" and add_price == "" and add_number == "" and status_selector == "":
-            cursor.execute(query)
+        if add_image == None and add_name == None and add_price == None and add_number == None and status_selector == None:
             message = "新商品追加"
+            print("if")
+
 
         #条件通りadd_nameが文字列、add_priceが数字の場合
-        elif add_image != "" and add_name != "" and (add_price.isdecimal() == True and int(add_price) > 0) and (add_number.isdecimal() == True and  int(add_number) > 0) and status_selector != "" :
-            drink_query = f"INSERT INTO drink_table (add_image, add_name, add_price, add_number, status) VALUES ('{add_name}', '{add_price}', LOCALTIME())"
-            cursor.execute(add_query)
+        #add_image != "" and add_name != "" and (add_price.isdecimal() == True and int(add_price) > 0) and (add_number.isdecimal() == True and  int(add_number) > 0) and status_selector != ""
+        elif add_image != "" and add_name != "" and add_price != "" and add_number != "" and status_selector != "" :
+            drink_query = f"INSERT INTO drink_table (drink_image, drink_name, price, edit_date, update_date, status) VALUES ('{add_image}', '{add_name}', {add_price}, LOCALTIME(), LOCALTIME(), {status_selector})"
+            stock_query = f"INSERT INTO stock_table (drink_name, stock, edit_date, update_date) VALUES ('{add_name}', {add_number}, LOCALTIME(), LOCALTIME())"
+            history_query = f"INSERT INTO history_table (order_date) VALUES (LOCALTIME())"
+            cursor.execute(drink_query)
+            cursor.execute(stock_query)
+            cursor.execute(history_query)
             cnx.commit()
-            cursor.execute(query)
             message = "追加成功：商品が正常に追加されました"
+            print("elif")
 
-        #エラーになる場合
-        else:
-            #条件に当てはまらない場合
-            if add_name != "":
-                cursor.execute(query)
-                message = "追加失敗：コメントを入力してください"
-
-            #条件に当てはまらない場合
-            elif add_name != "":
-                cursor.execute(query)
-                message = "追加失敗：名前を入力してください"
-
-
-        goods = []
-        for (image, name, price, number, selector) in cursor:
-            item = {"image" : image, "name" : name, "price" : price, "number" : number, "selector" : selector}
-            goods.append(item)
-            goods_count +=1
+        #SQL実行
+        cursor.execute(query)
 
         params = {
         "message" : message,
         "goods" : goods
+        }
+
+        if "change_status" in request.form.keys():
+           change_status = request.form.get("status_selector")
+           if change_status == 1:
+
+
+    except mysql.connector.Error as err:
+        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+            print("ユーザ名かパスワードに問題があります。")
+        elif err.errno == errorcode.ER_BAD_DB_ERROR:
+            print("データベースが存在しません。")
+        else:
+            print(err)
+    else:
+        cnx.close()
+
+    return render_template("admin.html", **params)
+
+#購入者画面
+@app.route("/user", methods=["GET", "POST"])
+def user():
+    host = 'localhost' # データベースのホスト名又はIPアドレス
+    username = 'root'  # MySQLのユーザ名
+    passwd   = 'kaA1ybB2ucC3d2c'    # MySQLのパスワード
+    dbname   = 'mydb'    # データベース名
+
+    my_money = ""
+    button = ""
+    message = ""
+    judge_money = ""
+    judge_select = ""
+    bought = ""
+    home = ""
+
+
+    #空欄の値を取得
+    if "my_money" in request.form.keys() and "button" in request.form.keys():
+        my_money = int(request.form.get("my_money"))
+        button = request.form.get("button")
+
+    try :
+        cnx = mysql.connector.connect(host=host, user=username, password=passwd, database=dbname)
+        cursor = cnx.cursor()
+
+        #常時実行するSQL
+        query = "SELECT DISTINCT dt.drink_image as drink_image, dt.drink_name as drink_name, dt.price as price, st.stock as stock FROM drink_table as dt LEFT JOIN stock_table as st ON dt.drink_id = st.drink_id WHERE stock IS NOT NULL and status = 1"
+        cursor.execute(query)
+
+        #クエリの中身を受け取る、クエリの中身をitemに格納する
+        goods = []
+        for (image, name, price, stock) in cursor:
+            item = {"image" : image, "name" : name, "price" : price, "stock" : stock}
+            goods.append(item)
+            if item["name"] == button:
+                bought = item
+
+
+        #ホーム画面
+        if my_money == "" and button == "" :
+            message = "自動販売機"
+            home = "home"
+
+        else:
+            if my_money == "" and button != "" :
+                message = "自動販売機結果"
+                judge_select = "＊商品を選択してください"
+
+            elif my_money != "" and button == "" :
+                message = "自動販売機結果"
+                judge_money = "＊お金を投入してください"
+
+            elif my_money == "" and button == None:
+                judge_money = "＊お金を投入してください"
+                judge_select = "＊商品を選択してください"
+
+            else :
+                if my_money >= bought["price"]:
+                    message = "自動販売機結果"
+                    judge_money = "＊ガシャコン！！" + bought["name"] + "が買えました！＊"
+                    judge_select = "<<<お釣りは" + str(my_money - bought["price"]) + "円です>>>"
+                    #在庫数のクエリ
+                    update_query = f'UPDATE stock_table SET stock = {bought["stock"]-1} WHERE drink_name = "{bought["name"]}"'
+                    cursor.execute(update_query)
+                    cnx.commit()
+
+                else:
+                    message = "自動販売機結果"
+                    judge_money = "＊お金が" + str(bought["price"] - my_money) + "円足りません"
+
+        params = {
+        "judge_money" : judge_money,
+        "judge_select" : judge_select,
+        "message" : message,
+        "goods" : goods,
+        "home" : home
         }
 
     except mysql.connector.Error as err:
@@ -707,5 +797,4 @@ def mysql_sample():
     else:
         cnx.close()
 
-    return render_template("admin.html", comment_count=comment_count, **params)
-"""
+    return render_template("user.html", **params)

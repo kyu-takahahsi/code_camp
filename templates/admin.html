@@ -22,7 +22,7 @@
    </style>
 </head>
 <body>
-    <h1>自動販売機管理ツール</h1>>
+    <h1>自動販売機管理ツール</h1>
     <h2>{{message}}</h2>
     <form method="POST" enctype="multipart/form-data">
         <label>名前　：<input type="text" name="add_name"></label><br>
@@ -32,12 +32,12 @@
         <p>＊商品の値段、在庫数は1以上</p>
         <input type="file" name="add_image">
         <p>＊画像ファイルはJPEGもしくはPNGのみ</p>
-        <select name="selector">
+        <select name="status_selector">
         <option value="" {% if nothing_check %} checked {% endif %}>選択してください</option>
-        <option value="public" {% if public_check %} checked {% endif %}>公開</option>
-        <option value="private" {% if private_check %} checked {% endif %}>非公開</option>
+        <option value="1" {% if public_check %} checked {% endif %}>公開</option>
+        <option value="0" {% if private_check %} checked {% endif %}>非公開</option>
         </select>
-        <p>公開、非公開を選択</p>
+        <p>＊公開、非公開を選択</p>
         <input type="submit" value="商品追加">
     </form>
     <hr>
@@ -46,18 +46,32 @@
     </form>
     <table>
         <tr>
-           <th>名前</th>
-           <th>コメント</th>
-           <th>投稿時刻</th>
+            <th>商品画像</th>
+            <th>商品名</th>
+            <th>価格</th>
+            <th>在庫数</th>
+            <th>ステータス</th>
         </tr>
-
        {% for item in goods %}
         <tr>
-            <td>{{ item.image }}</td>
+            <form method="POST" enctype="multipart/form-data">
+            <td><img src={{ item.image }}></td>
             <td>{{ item.name }}</td>
             <td>{{ item.price }}</td>
-            <td>{{ item.number }}<input type="text" name="change_number"><input type="submit" value="商品追加"></td>
-            <td>{{ item.status }}</td>
+            <td>
+                <input type="text" value={{number}}  name="change_number">
+                <input type="submit" value="変更">
+            </td>
+            </form>
+            <form method="POST">
+            <td>
+                {% if item.status == 1 %}
+                <input type="submit"  name=change_status value="公開">
+                {% else %}
+                <input type="submit" name=change_status value="非公開">
+                {% endif %}
+            </td>
+        </form>
         </tr>
        {% endfor %}
     </table>

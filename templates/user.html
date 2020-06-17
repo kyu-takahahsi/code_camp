@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+   <meta charset="UTF-8">
+   <title>サンプル</title>
+   <style type="text/css">
+       table, td, th {
+           border: solid black 1px;
+       }
+
+       table {
+           width: 600px;
+       }
+       p {
+           font-size: 15px
+       }
+       hr {
+            border-width: 1px 0px 0px 0px;
+            border-style: dashed;
+            border-color: black;
+            height: 10px;
+        }
+   </style>
+</head>
+<body>
+    <h1>{{message}}</h1>
+    <p>{{judge_money}}</p>
+    <p>{{judge_select}}</p>
+    {% if home %}
+    <form method="POST">
+        <label>値段　：<input type="text" name="my_money"></label><br>
+        <hr>
+        <table>
+            <tr>
+                <th>商品画像</th>
+                <th>商品名</th>
+                <th>価格</th>
+                <th>在庫数</th>
+                <th>選択</th>
+            </tr>
+        {% for item in goods %}
+            <tr>
+                <td><img src={{ item.image }}></td>
+                <td>{{ item.name }}</td>
+                <td>{{ item.price }}</td>
+                <td>{{ item.stock }}</td>
+                {% if item.stock != 0 %}
+                <td><input type="radio" name="button" value={{item.name}} {{'checked' if button == 'buy'}}></td>
+                {% else %}
+                <td>売り切れ</td>
+                {% endif %}
+            </tr>
+        {% endfor %}
+        </table>
+        <input type="submit" value="商品購入">
+    </form>
+    {% endif %}
+
+
+</body>
+</html>
