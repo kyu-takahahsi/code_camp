@@ -57,11 +57,11 @@
             <td>{{ item.price }}</td>
             <form method="POST">
                 <td>
-                    <input type="text" name="change_stock" style="text-align:right" value={{item.number}}>
-                    <input type="submit" value="変更">
+                    <input type="text" name="change_stock" style="text-align:right" value={{item.stock}}>
+                    <button type="submit" name="change_stock_id" value={{item.id}}>変更</button>
                 </td>
-                </form>
-                <form method="POST">
+            </form>
+            <form method="POST">
                 <td>
                     {% if item.status == 1 %}
                     <button type="submit" name=change_status value={{item.id}}>公開</button>

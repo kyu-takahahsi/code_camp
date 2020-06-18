@@ -640,6 +640,10 @@ def admin():
     message = ""
     change_status = ""
     update_status = ""
+    change_stock = ""
+    change_stock_id = ""
+    update_stock = ""
+
 
     #空欄の値を取得
     add_image = request.files.get("file","")
@@ -649,6 +653,9 @@ def admin():
     status_selector = request.form.get("status_selector","")
     if "change_status" in request.form.keys():
         change_status = int(request.form.get("change_status"))
+    if "change_stock_id" in request.form.keys() != "":
+        change_stock = int(request.form.get("change_stock"))
+        change_stock_id = int(request.form.get("change_stock_id"))
 
     try :
         cnx = mysql.connector.connect(host=host, user=username, password=passwd, database=dbname)
@@ -660,13 +667,13 @@ def admin():
         cursor.execute(query)
         #SQLで取得した値を代入
         goods = []
-        for (id, image, name, price, number, status) in cursor:
-            item = {"id" : id, "image" : image, "name" : name, "price" : price, "number" : number, "status" : status}
+        for (id, image, name, price, stock, status) in cursor:
+            item = {"id" : id, "image" : image, "name" : name, "price" : price, "stock" : stock, "status" : status}
             goods.append(item)
             if item["id"] == change_status:
                 update_status = item
-                print(item["name"])
-                print(item["status"])
+            if item["id"] == change_stock_id:
+                update_stock = item
 
 
         #追加が空欄の場合
@@ -684,29 +691,49 @@ def admin():
             cnx.commit()
             message = "追加成功：商品が正常に追加されました"
         else:
-            print("追加できていうません")
+            print("追加できていません")
 
+
+
+        #在庫変更のSQL処理
+        if "change_stock" in request.form.keys():
+            if update_stock["stock"] != change_stock:
+                stock_update_query_1 = f'UPDATE stock_table SET stock = {change_stock}, update_date = LOCALTIME() WHERE drink_id = {update_stock["id"]}'
+                stock_update_query_2 = f'UPDATE drink_table SET update_date = LOCALTIME() WHERE drink_id = {update_stock["id"]}'
+                cursor.execute(stock_update_query_1)
+                cursor.execute(stock_update_query_2)
+                cnx.commit()
+                print("変更できました")
+            else:
+                print("値が変わっていません")
+
+
+
+
+        #公開・非公開のSQL処理
         if "change_status" in request.form.keys():
             if update_status["status"] == 1:
-                status_update_query = f'UPDATE drink_table SET status = 0 WHERE drink_id = {update_status["id"]}'
-                cursor.execute(status_update_query)
+                status_update_query_1 = f'UPDATE drink_table SET status = 0 WHERE drink_id = {update_status["id"]}'
+                status_update_query_2 = f'UPDATE drink_table SET update_date = LOCALTIME() WHERE drink_id = {update_status["id"]}'
+                cursor.execute(status_update_query_1)
+                cursor.execute(status_update_query_2)
                 cnx.commit()
-                print(update_status["status"])
                 print(update_status["name"] + "を公開にしました")
 
             elif update_status["status"] == 0:
-                status_update_query = f'UPDATE drink_table SET status = 1 WHERE drink_id = {update_status["id"]}'
-                cursor.execute(status_update_query)
+                status_update_query_1 = f'UPDATE drink_table SET status = 1 WHERE drink_id = {update_status["id"]}'
+                status_update_query_2 = f'UPDATE drink_table SET update_date = LOCALTIME() WHERE drink_id = {update_status["id"]}'
+                cursor.execute(status_update_query_1)
+                cursor.execute(status_update_query_2)
                 cnx.commit()
-                print(update_status["status"])
                 print(update_status["name"] + "を非公開にしました")
 
 
         #ステータスの変更の適応
         cursor.execute(query)
         goods = []
-        for (id, image, name, price, number, status) in cursor:
-            item = {"id" : id, "image" : image, "name" : name, "price" : price, "number" : number, "status" : status}
+        for (id, image, name, price, stock, status) in cursor:
+            item = {"id" : id, "image" : image, "name" : name, "price" : price, "stock" : stock, "status" : status}
             goods.append(item)
 
         params = {
