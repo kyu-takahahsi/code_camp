@@ -66,9 +66,9 @@
             <form method="POST">
             <td>
                 {% if item.status == 1 %}
-                <button type="submit" name=change_status value={{item.id}}>非公開にする</button>
+                <button type="submit" name=change_status value={{item.id}}>公開</button>
                 {% elif item.status == 0 %}
-                <button type="submit" name=change_status value={{item.id}}>非公開にする</button>
+                <button type="submit" name=change_status value={{item.id}}>非公開</button>
                 {% endif %}
             </td>
         </form>

@@ -656,7 +656,7 @@ def admin():
         cursor = cnx.cursor()
 
         #常時実行するSQL
-        query = "SELECT DISTINCT dt.drink_id as drink_id, dt.drink_image as drink_image, dt.drink_name as drink_name, dt.price as price, st.stock as stock, dt.status as status FROM drink_table as dt LEFT JOIN stock_table as st ON dt.drink_id = st.drink_id"
+        query = "SELECT  dt.drink_id as drink_id, dt.drink_image as drink_image, dt.drink_name as drink_name, dt.price as price, st.stock as stock, dt.status as status FROM drink_table as dt LEFT JOIN stock_table as st ON dt.drink_id = st.drink_id"
         #SQL実行
         cursor.execute(query)
         #SQLで取得した値を代入
@@ -664,11 +664,12 @@ def admin():
         for (id, image, name, price, number, status) in cursor:
             item = {"id" : id, "image" : image, "name" : name, "price" : price, "number" : number, "status" : status}
             goods.append(item)
-            print("change_status → " + str(change_status))
-            print("item → " + str(item["id"]))
             if item["id"] == change_status:
                 update_status = item
-                print("できました！！")
+                print(item["name"])
+                print(item["status"])
+                print(update_status)
+
 
 
         #追加が空欄の場合
@@ -679,28 +680,32 @@ def admin():
         elif add_image != "" and add_name != "" and add_price != "" and add_number != "" and status_selector != "" :
             drink_query = f"INSERT INTO drink_table (drink_image, drink_name, price, edit_date, update_date, status) VALUES ('{add_image}', '{add_name}', {add_price}, LOCALTIME(), LOCALTIME(), {status_selector})"
             stock_query = f"INSERT INTO stock_table (drink_name, stock, edit_date, update_date) VALUES ('{add_name}', {add_number}, LOCALTIME(), LOCALTIME())"
-            history_query = f"INSERT INTO history_table (order_date) VALUES (LOCALTIME())"
+
             cursor.execute(drink_query)
             cursor.execute(stock_query)
-            cursor.execute(history_query)
             cnx.commit()
             message = "追加成功：商品が正常に追加されました"
 
+        """
+        if update_status["status"] == 1:
+            status_update_query = f'UPDATE drink_table SET status = 0 WHERE drink_id = {update_status["id"]}'
+            cursor.execute(status_update_query)
+            cnx.commit()
+            #print(update_status["id"])
+            print(update_status["status"])
+            print(update_status["name"] + "を公開にしました")
+
+        elif update_status["status"] == 0:
+            status_update_query = f'UPDATE drink_table SET status = 1 WHERE drink_id = {update_status["id"]}'
+            cursor.execute(status_update_query)
+            cnx.commit()
+            #print(update_status["id"])
+            print(update_status["status"])
+            print(update_status["name"] + "を非公開にしました")
+        """
+
+
         #ステータスの変更
-
-        if update_status["status"] == 0:
-            status_update_query = f'UPDATE drink_table SET status = 1 WHERE drink_name = "{update_status["name"]}"'
-            cursor.execute(status_update_query)
-            cnx.commit()
-
-        elif update_status["status"] == 1:
-            status_update_query = f'UPDATE drink_table SET status = 0 WHERE drink_name = "{update_status["name"]}"'
-            cursor.execute(status_update_query)
-            cnx.commit()
-
-
-
-
 
         params = {
         "message" : message,
@@ -741,24 +746,23 @@ def user():
     #空欄の値を取得
     if "my_money" in request.form.keys() and "button" in request.form.keys():
         my_money = int(request.form.get("my_money"))
-        button = request.form.get("button")
+        button = int(request.form.get("button"))
 
     try :
         cnx = mysql.connector.connect(host=host, user=username, password=passwd, database=dbname)
         cursor = cnx.cursor()
 
         #常時実行するSQL
-        query = "SELECT DISTINCT dt.drink_image as drink_image, dt.drink_name as drink_name, dt.price as price, st.stock as stock FROM drink_table as dt LEFT JOIN stock_table as st ON dt.drink_id = st.drink_id WHERE stock IS NOT NULL and status = 1"
+        query = "SELECT dt.drink_id as drink_id, dt.drink_image as drink_image, dt.drink_name as drink_name, dt.price as price, st.stock as stock FROM drink_table as dt LEFT JOIN stock_table as st ON dt.drink_id = st.drink_id WHERE stock IS NOT NULL and status = 1"
         cursor.execute(query)
 
         #クエリの中身を受け取る、クエリの中身をitemに格納する
         goods = []
-        for (image, name, price, stock) in cursor:
-            item = {"image" : image, "name" : name, "price" : price, "stock" : stock}
+        for (id, image, name, price, stock) in cursor:
+            item = {"id" : id, "image" : image, "name" : name, "price" : price, "stock" : stock}
             goods.append(item)
-            if item["name"] == button:
+            if item["id"] == button:
                 bought = item
-
 
         #ホーム画面
         if my_money == "" and button == "" :
@@ -788,8 +792,10 @@ def user():
                     judge_money = "＊ガシャコン！！" + bought["name"] + "が買えました！＊"
                     judge_select = "<<<お釣りは" + str(my_money - bought["price"]) + "円です>>>"
                     #在庫数のクエリ
-                    stock_update_query = f'UPDATE stock_table SET stock = {bought["stock"]-1} WHERE drink_name = "{bought["name"]}"'
+                    stock_update_query = f'UPDATE stock_table SET stock = {bought["stock"]-1} WHERE drink_id = "{bought["id"]}"'
+                    history_query = f'INSERT INTO history_table (drink_id,order_date) VALUES ({bought["id"]}, LOCALTIME())'
                     cursor.execute(stock_update_query)
+                    cursor.execute(history_query)
                     cnx.commit()
 
                 #金額、商品共に入力されているが、足りていない

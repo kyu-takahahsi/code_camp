@@ -45,7 +45,7 @@
                 <td>{{ item.price }}</td>
                 <td>{{ item.stock }}</td>
                 {% if item.stock != 0 %}
-                <td><input type="radio" name="button" value={{item.name}} {{'checked' if button == 'buy'}}></td>
+                <td><input type="radio" name="button" value={{item.id}} {{'checked' if button == 'buy'}}></td>
                 {% else %}
                 <td>売り切れ</td>
                 {% endif %}
