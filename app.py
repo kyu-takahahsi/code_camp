@@ -623,7 +623,6 @@ def transaction():
     return render_template("transaction.html", goods=goods)
 """
 #18章ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-
 #管理者画面
 @app.route("/admin", methods=["GET", "POST"])
 def admin():
@@ -643,11 +642,11 @@ def admin():
     update_status = ""
 
     #空欄の値を取得
-    add_image = request.files.get("file")
-    add_name = request.form.get("add_name")
-    add_price = request.form.get("add_price")
-    add_number = request.form.get("add_number")
-    status_selector = request.form.get("status_selector")
+    add_image = request.files.get("file","")
+    add_name = request.form.get("add_name","")
+    add_price = request.form.get("add_price","")
+    add_number = request.form.get("add_number","")
+    status_selector = request.form.get("status_selector","")
     if "change_status" in request.form.keys():
         change_status = int(request.form.get("change_status"))
 
@@ -668,8 +667,6 @@ def admin():
                 update_status = item
                 print(item["name"])
                 print(item["status"])
-                print(update_status)
-
 
 
         #追加が空欄の場合
@@ -677,35 +674,40 @@ def admin():
             message = "新商品追加"
 
         #条件通りadd_nameが文字列、add_priceが数字の場合
-        elif add_image != "" and add_name != "" and add_price != "" and add_number != "" and status_selector != "" :
+        elif add_image == "" and add_name != "" and add_price != "" and add_number != "" and status_selector != "" :
             drink_query = f"INSERT INTO drink_table (drink_image, drink_name, price, edit_date, update_date, status) VALUES ('{add_image}', '{add_name}', {add_price}, LOCALTIME(), LOCALTIME(), {status_selector})"
             stock_query = f"INSERT INTO stock_table (drink_name, stock, edit_date, update_date) VALUES ('{add_name}', {add_number}, LOCALTIME(), LOCALTIME())"
+            print("追加成功：商品が正常に追加されました")
 
             cursor.execute(drink_query)
             cursor.execute(stock_query)
             cnx.commit()
             message = "追加成功：商品が正常に追加されました"
+        else:
+            print("追加できていうません")
 
-        """
-        if update_status["status"] == 1:
-            status_update_query = f'UPDATE drink_table SET status = 0 WHERE drink_id = {update_status["id"]}'
-            cursor.execute(status_update_query)
-            cnx.commit()
-            #print(update_status["id"])
-            print(update_status["status"])
-            print(update_status["name"] + "を公開にしました")
+        if "change_status" in request.form.keys():
+            if update_status["status"] == 1:
+                status_update_query = f'UPDATE drink_table SET status = 0 WHERE drink_id = {update_status["id"]}'
+                cursor.execute(status_update_query)
+                cnx.commit()
+                print(update_status["status"])
+                print(update_status["name"] + "を公開にしました")
 
-        elif update_status["status"] == 0:
-            status_update_query = f'UPDATE drink_table SET status = 1 WHERE drink_id = {update_status["id"]}'
-            cursor.execute(status_update_query)
-            cnx.commit()
-            #print(update_status["id"])
-            print(update_status["status"])
-            print(update_status["name"] + "を非公開にしました")
-        """
+            elif update_status["status"] == 0:
+                status_update_query = f'UPDATE drink_table SET status = 1 WHERE drink_id = {update_status["id"]}'
+                cursor.execute(status_update_query)
+                cnx.commit()
+                print(update_status["status"])
+                print(update_status["name"] + "を非公開にしました")
 
 
-        #ステータスの変更
+        #ステータスの変更の適応
+        cursor.execute(query)
+        goods = []
+        for (id, image, name, price, number, status) in cursor:
+            item = {"id" : id, "image" : image, "name" : name, "price" : price, "number" : number, "status" : status}
+            goods.append(item)
 
         params = {
         "message" : message,
