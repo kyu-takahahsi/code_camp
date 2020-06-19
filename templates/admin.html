@@ -23,7 +23,8 @@
 </head>
 <body>
     <h1>自動販売機管理ツール</h1>
-    <h2>{{message}}</h2>
+    <h2>新商品追加</h2>
+    <h3>{{add_message}}</h3>
     <form method="POST" enctype="multipart/form-data">
         <label>名前　：<input type="text" name="add_name"></label><br>
         <label>値段　：<input type="text" name="add_price"></label><br>
@@ -38,10 +39,11 @@
             <option value=0 {% if private_check %} checked {% endif %}>非公開</option>
         </select>
         <p>＊公開、非公開を選択</p>
-        <input type="submit" value="商品追加">
+        <button type="submit" name="add_drink" value="success">商品追加</button>
     </form>
         <hr>
         <h3>≪商品情報変更≫</h3>
+        <h4>{{change_message}}</h4>
     <table>
         <tr>
             <th>商品画像</th>

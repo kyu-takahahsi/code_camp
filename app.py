@@ -631,32 +631,44 @@ def admin():
     passwd   = 'kaA1ybB2ucC3d2c'    # MySQLのパスワード
     dbname   = 'mydb'    # データベース名
 
+    #追加
     add_image = ""
     add_name = ""
     add_price = ""
     add_number = ""
     status_selector = ""
+
+    #HTML受け渡し
     goods = ""
-    message = ""
+    add_message = ""
+    change_message = ""
+
+    #変更
     change_status = ""
     update_status = ""
     change_stock = ""
     change_stock_id = ""
     update_stock = ""
 
+    #ボタンが押された場合にしか値を受け取らない
+    #商品追加された場合、値を取得
+    if "add_drink" in request.form.keys():
+        add_image = request.files.get("file")
+        add_name = request.form.get("add_name")
+        add_price = request.form.get("add_price")
+        add_number = request.form.get("add_number")
+        status_selector = request.form.get("status_selector","")
 
-    #空欄の値を取得
-    add_image = request.files.get("file","")
-    add_name = request.form.get("add_name","")
-    add_price = request.form.get("add_price","")
-    add_number = request.form.get("add_number","")
-    status_selector = request.form.get("status_selector","")
+    #ステータス変更された場合、値を取得
     if "change_status" in request.form.keys():
         change_status = int(request.form.get("change_status"))
-    if "change_stock_id" in request.form.keys() != "":
+
+    #在庫数が変更された場合、値を取得
+    if "change_stock_id" in request.form.keys():
         change_stock = int(request.form.get("change_stock"))
         change_stock_id = int(request.form.get("change_stock_id"))
 
+    #mysqlに接続
     try :
         cnx = mysql.connector.connect(host=host, user=username, password=passwd, database=dbname)
         cursor = cnx.cursor()
@@ -676,71 +688,80 @@ def admin():
                 update_stock = item
 
 
-        #追加が空欄の場合
-        if (add_image == None and add_name == None and add_price == None and add_number == None and status_selector == None) or (add_name == "" and add_price == "" and add_number == "" and status_selector == ""):
-            message = "新商品追加"
+        #商品追加のボタンが押された場合
+        if "add_drink" in request.form.keys():
+            #全ての項目が入力され、値段と在庫数が整数の場合
+            if (add_image != "" and add_name != "" and add_price != "" and add_number != "" and status_selector != "") and (add_number.isdecimal() == True and add_price.isdecimal() == True):
+                drink_query = f"INSERT INTO drink_table (drink_image, drink_name, price, edit_date, update_date, status) VALUES ('{add_image}', '{add_name}', {add_price}, LOCALTIME(), LOCALTIME(), {status_selector})"
+                stock_query = f"INSERT INTO stock_table (drink_name, stock, edit_date, update_date) VALUES ('{add_name}', {add_number}, LOCALTIME(), LOCALTIME())"
+                cursor.execute(drink_query)
+                cursor.execute(stock_query)
+                cnx.commit()
+                add_message = "＊追加成功：商品が正常に追加されました"
 
-        #条件通りadd_nameが文字列、add_priceが数字の場合
-        elif add_image == "" and add_name != "" and add_price != "" and add_number != "" and status_selector != "" :
-            drink_query = f"INSERT INTO drink_table (drink_image, drink_name, price, edit_date, update_date, status) VALUES ('{add_image}', '{add_name}', {add_price}, LOCALTIME(), LOCALTIME(), {status_selector})"
-            stock_query = f"INSERT INTO stock_table (drink_name, stock, edit_date, update_date) VALUES ('{add_name}', {add_number}, LOCALTIME(), LOCALTIME())"
-            print("追加成功：商品が正常に追加されました")
-
-            cursor.execute(drink_query)
-            cursor.execute(stock_query)
-            cnx.commit()
-            message = "追加成功：商品が正常に追加されました"
-        else:
-            print("追加できていません")
+            #条件にあっていない入力や空欄がある
+            else:
+                add_message = "＊追加失敗：全ての項目を入力してください"
 
 
 
         #在庫変更のSQL処理
-        if "change_stock" in request.form.keys():
+        elif "change_stock_id" in request.form.keys():
+            #入力欄の値が変更されたときのみデータベース更新
             if update_stock["stock"] != change_stock:
                 stock_update_query_1 = f'UPDATE stock_table SET stock = {change_stock}, update_date = LOCALTIME() WHERE drink_id = {update_stock["id"]}'
                 stock_update_query_2 = f'UPDATE drink_table SET update_date = LOCALTIME() WHERE drink_id = {update_stock["id"]}'
                 cursor.execute(stock_update_query_1)
                 cursor.execute(stock_update_query_2)
                 cnx.commit()
-                print("変更できました")
-            else:
-                print("値が変わっていません")
+                change_message = "＊" + update_stock["name"] + "の在庫数が変更されました"
 
+            #入力欄の値が変更されていない
+            else:
+                change_message = "＊" + update_stock["name"] + "の値が変更されていません"
 
 
 
         #公開・非公開のSQL処理
-        if "change_status" in request.form.keys():
+        elif "change_status" in request.form.keys():
+            #現在のステータスが公開(1)の場合、非公開(0)に変更
             if update_status["status"] == 1:
                 status_update_query_1 = f'UPDATE drink_table SET status = 0 WHERE drink_id = {update_status["id"]}'
                 status_update_query_2 = f'UPDATE drink_table SET update_date = LOCALTIME() WHERE drink_id = {update_status["id"]}'
                 cursor.execute(status_update_query_1)
                 cursor.execute(status_update_query_2)
                 cnx.commit()
-                print(update_status["name"] + "を公開にしました")
+                change_message = "＊" + update_status["name"] + "を非公開にしました"
 
+            #現在のステータスが非公開(0)の場合、公開(1)に変更
             elif update_status["status"] == 0:
                 status_update_query_1 = f'UPDATE drink_table SET status = 1 WHERE drink_id = {update_status["id"]}'
                 status_update_query_2 = f'UPDATE drink_table SET update_date = LOCALTIME() WHERE drink_id = {update_status["id"]}'
                 cursor.execute(status_update_query_1)
                 cursor.execute(status_update_query_2)
                 cnx.commit()
-                print(update_status["name"] + "を非公開にしました")
+                change_message = "＊" + update_status["name"] + "を公開にしました"
 
 
-        #ステータスの変更の適応
+
+        #どのボタンも押されていない場合(最初のページを表示する)
+        else:
+            pass
+
+
+        #いつでも実行する表示のためのSQL
         cursor.execute(query)
+        #データベース変更後に再度リストに格納
         goods = []
         for (id, image, name, price, stock, status) in cursor:
             item = {"id" : id, "image" : image, "name" : name, "price" : price, "stock" : stock, "status" : status}
             goods.append(item)
 
         params = {
-        "message" : message,
+        "add_message" : add_message,
+        "change_message" : change_message,
         "goods" : goods
         }
-
 
     except mysql.connector.Error as err:
         if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
@@ -764,7 +785,7 @@ def user():
     dbname   = 'mydb'    # データベース名
 
     my_money = ""
-    button = ""
+    select_button = ""
     message = ""
     judge_money = ""
     judge_select = ""
@@ -772,10 +793,14 @@ def user():
     home = ""
 
 
+
     #空欄の値を取得
-    if "my_money" in request.form.keys() and "button" in request.form.keys():
-        my_money = int(request.form.get("my_money"))
-        button = int(request.form.get("button"))
+    if "buy_drink" in request.form.keys():
+        my_money = request.form.get("my_money")
+        select_button = request.form.get("select_button")
+        if select_button != None and select_button != "":
+            select_button = int(select_button)
+
 
     try :
         cnx = mysql.connector.connect(host=host, user=username, password=passwd, database=dbname)
@@ -790,47 +815,64 @@ def user():
         for (id, image, name, price, stock) in cursor:
             item = {"id" : id, "image" : image, "name" : name, "price" : price, "stock" : stock}
             goods.append(item)
-            if item["id"] == button:
+            if item["id"] == select_button:
                 bought = item
 
-        #ホーム画面
-        if my_money == "" and button == "" :
-            message = "自動販売機"
-            home = "home"
 
-        else:
-            #商品が選択されていない
-            if my_money == "" and button != "" :
-                message = "自動販売機結果"
-                judge_select = "＊商品を選択してください"
 
-            #金額が入力されていない
-            elif my_money != "" and button == "" :
-                message = "自動販売機結果"
-                judge_money = "＊お金を投入してください"
-
-            #金額、商品共に入力されていない
-            elif my_money == "" and button == None:
-                judge_money = "＊お金を投入してください"
-                judge_select = "＊商品を選択してください"
-
-            else:
-                #金額、商品共に入力されており、足りている
+        #商品購入ボタンが押された場合
+        if "buy_drink" in request.form.keys():
+            #金額・商品共に数字が入力されており、足りている
+            if (my_money != "" and my_money.isdecimal() == True) and select_button != None:
+                my_money = int(my_money)
+                print(bought["price"])
+                bought["price"] = int(bought["price"])
                 if my_money >= bought["price"]:
                     message = "自動販売機結果"
                     judge_money = "＊ガシャコン！！" + bought["name"] + "が買えました！＊"
                     judge_select = "<<<お釣りは" + str(my_money - bought["price"]) + "円です>>>"
-                    #在庫数のクエリ
+                    #在庫数変更のクエリ
                     stock_update_query = f'UPDATE stock_table SET stock = {bought["stock"]-1} WHERE drink_id = "{bought["id"]}"'
                     history_query = f'INSERT INTO history_table (drink_id,order_date) VALUES ({bought["id"]}, LOCALTIME())'
                     cursor.execute(stock_update_query)
                     cursor.execute(history_query)
                     cnx.commit()
 
-                #金額、商品共に入力されているが、足りていない
+                #金額・商品共に入力されているが、足りていない
                 else:
                     message = "自動販売機結果"
                     judge_money = "＊お金が" + str(bought["price"] - my_money) + "円足りません"
+
+
+
+            #金額入力もしくは商品の選択が行われていない
+            elif (my_money == "" or my_money.isdecimal() == False) or select_button == None:
+                #金額、商品共に入力されていない
+                if my_money == "" and select_button == None:
+                    message = "自動販売機結果"
+                    judge_money = "＊お金を投入してください"
+                    judge_select = "＊商品を選択してください"
+
+                #商品が選択されていない
+                elif my_money == "":
+                    message = "自動販売機結果"
+                    judge_select = "＊お金を投入してください"
+
+                #金額が入力されていない
+                elif select_button == None :
+                    message = "自動販売機結果"
+                    judge_money = "＊商品を選択してください"
+
+                else:
+                    message = "自動販売機結果"
+                    judge_money = "＊数字を入力してください"
+
+
+        #ホーム画面
+        else:
+            message = "自動販売機"
+            home = "home"
+
 
         params = {
         "judge_money" : judge_money,

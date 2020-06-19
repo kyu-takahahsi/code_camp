@@ -45,14 +45,14 @@
                 <td>{{ item.price }}</td>
                 <td>{{ item.stock }}</td>
                 {% if item.stock != 0 %}
-                <td><input type="radio" name="button" value={{item.id}} {{'checked' if button == 'buy'}}></td>
+                <td><input type="radio" name="select_button" value={{item.id}} {{'checked' if button == "select_button"}}></td>
                 {% else %}
                 <td>売り切れ</td>
                 {% endif %}
             </tr>
         {% endfor %}
         </table>
-        <input type="submit" value="商品購入">
+        <button type="submit" name="buy_drink" value="buy">商品購入</button>
     </form>
     {% else %}
     <button onclick="history.back()">戻る</button>
