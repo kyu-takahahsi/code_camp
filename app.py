@@ -703,7 +703,7 @@ def admin():
         #商品追加のボタンが押された場合ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
         if "add_drink" in request.form.keys():
             #全ての項目が入力され、値段と在庫数が整数の場合
-            if (add_image != "" and add_name != "" and add_price != "" and add_number != "" and status_selector != "") and (add_number.isdecimal() == True and add_price.isdecimal() == True):
+            if (add_image != "" and add_name != "" and add_price != "" and add_number != "" and status_selector != "") and (add_number.isdecimal() == True and add_price.isdecimal() == True) and (int(add_price) >= 0 and int(add_number) >= 0) :
                 drink_query = f"INSERT INTO drink_table (drink_image, drink_name, price, edit_date, update_date, status) VALUES ('{add_image}', '{add_name}', {add_price}, LOCALTIME(), LOCALTIME(), {status_selector})"
                 stock_query = f"INSERT INTO stock_table (drink_name, stock, edit_date, update_date) VALUES ('{add_name}', {add_number}, LOCALTIME(), LOCALTIME())"
                 cursor.execute(drink_query)
@@ -713,7 +713,7 @@ def admin():
 
             #条件にあっていない入力や空欄がある
             else:
-                add_message = "＊追加失敗：全ての項目を入力してください"
+                add_message = "＊追加失敗：全ての項目を条件通り入力してください"
 
 
         #在庫変更のボタンが押された場合ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
@@ -834,14 +834,14 @@ def user():
 
 
         #いつでも実行する表示のためのSQLーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-        query = "SELECT dt.drink_id as drink_id, dt.drink_image as drink_image, dt.drink_name as drink_name, dt.price as price, st.stock as stock FROM drink_table as dt LEFT JOIN stock_table as st ON dt.drink_id = st.drink_id WHERE stock IS NOT NULL and status = 1"
+        query = "SELECT dt.drink_id as drink_id, dt.drink_image as drink_image, dt.drink_name as drink_name, dt.price as price, dt.status as status, st.stock as stock FROM drink_table as dt LEFT JOIN stock_table as st ON dt.drink_id = st.drink_id WHERE stock IS NOT NULL and status = 1"
         cursor.execute(query)
 
 
        #SQLで取得した値を格納(HTMLに送るためのリスト)ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
         goods = []
-        for (id, image, name, price, stock) in cursor:
-            item = {"id" : id, "image" : image, "name" : name, "price" : price, "stock" : stock}
+        for (id, image, name, price, status, stock) in cursor:
+            item = {"id" : id, "image" : image, "name" : name, "price" : price, "status" : status, "stock" : stock}
             goods.append(item)
             #商品購入ボタンの押された商品のidと同じ商品の情報を変数に格納
             if item["id"] == select_button:
@@ -851,11 +851,11 @@ def user():
         #商品購入ボタンが押された場合ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
         if "buy_drink" in request.form.keys():
             #金額・商品共に数字が入力されており、足りている
-            if (my_money != "" and my_money.isdecimal() == True) and select_button != None:
+            if (my_money != "" and my_money.isdecimal() == True) and select_button != None and bought != "":
                 my_money = int(my_money)
-                print(bought["price"])
                 bought["price"] = int(bought["price"])
-                if my_money >= bought["price"]:
+                bought["stock"] = int(bought["stock"])
+                if my_money >= bought["price"] and bought["stock"] > 0 and bought["status"] != "0":
                     message = "自動販売機結果"
                     judge_money = "＊ガシャコン！！" + bought["name"] + "が買えました！＊"
                     judge_select = "<<<お釣りは" + str(my_money - bought["price"]) + "円です>>>"
@@ -866,10 +866,20 @@ def user():
                     cursor.execute(history_query)
                     cnx.commit()
 
-                #金額・商品共に入力されているが、足りていない
+                #金額・商品共に入力されているが、在庫がない
+                elif my_money >= bought["price"] and bought["stock"] == 0 and bought["status"] != "0":
+                    message = "自動販売機結果"
+                    judge_money = "＊現在在庫がありません"
+
+                #金額・商品共に入力されているが、金額が足りていない
                 else:
                     message = "自動販売機結果"
                     judge_money = "＊お金が" + str(bought["price"] - my_money) + "円足りません"
+
+            #金額・商品共に数字が入力されており、足りているが公開されていない
+            elif (my_money != "" and my_money.isdecimal() == True) and select_button != None and bought == "":
+                    message = "自動販売機結果"
+                    judge_money = "＊申し訳ありません、この商品は現在お売りすることができません"
 
 
             #金額入力もしくは商品の選択が行われていない
@@ -890,9 +900,10 @@ def user():
                     message = "自動販売機結果"
                     judge_money = "＊商品を選択してください"
 
+                #金額が数字ではない
                 else:
                     message = "自動販売機結果"
-                    judge_money = "＊数字を入力してください"
+                    judge_money = "＊金額は数字を入力してください"
 
 
         ##どのボタンも押されていない場合(最初のページを表示する)ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
