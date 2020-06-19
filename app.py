@@ -631,6 +631,8 @@ def admin():
     passwd   = 'kaA1ybB2ucC3d2c'    # MySQLのパスワード
     dbname   = 'mydb'    # データベース名
 
+
+    #変数定義ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
     #追加
     add_image = ""
     add_name = ""
@@ -638,19 +640,22 @@ def admin():
     add_number = ""
     status_selector = ""
 
-    #HTML受け渡し
+    #HTML受け渡し(判定)
     goods = ""
     add_message = ""
     change_message = ""
 
-    #変更
+    #ステータス変更
     change_status = ""
     update_status = ""
+
+    #在庫数変更
     change_stock = ""
     change_stock_id = ""
     update_stock = ""
 
-    #ボタンが押された場合にしか値を受け取らない
+
+    #ボタンが押された場合にしか値を受け取らないーーーーーーーーーーーーーーーーーーーーーーーーーーーー
     #商品追加された場合、値を取得
     if "add_drink" in request.form.keys():
         add_image = request.files.get("file")
@@ -668,27 +673,34 @@ def admin():
         change_stock = int(request.form.get("change_stock"))
         change_stock_id = int(request.form.get("change_stock_id"))
 
-    #mysqlに接続
+
+    #mysqlに接続ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
     try :
         cnx = mysql.connector.connect(host=host, user=username, password=passwd, database=dbname)
         cursor = cnx.cursor()
 
+
         #常時実行するSQL
         query = "SELECT  dt.drink_id as drink_id, dt.drink_image as drink_image, dt.drink_name as drink_name, dt.price as price, st.stock as stock, dt.status as status FROM drink_table as dt LEFT JOIN stock_table as st ON dt.drink_id = st.drink_id"
+
         #SQL実行
         cursor.execute(query)
-        #SQLで取得した値を代入
+
+
+        #SQLで取得した値を格納(HTMLに送るためのリスト)
         goods = []
         for (id, image, name, price, stock, status) in cursor:
             item = {"id" : id, "image" : image, "name" : name, "price" : price, "stock" : stock, "status" : status}
             goods.append(item)
+            #ステータス変更ボタンの押された商品のidと同じ商品の情報を変数に格納
             if item["id"] == change_status:
                 update_status = item
+            #在庫数変更ボタンの押された商品のidと同じ商品の情報を変数に格納
             if item["id"] == change_stock_id:
                 update_stock = item
 
 
-        #商品追加のボタンが押された場合
+        #商品追加のボタンが押された場合ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
         if "add_drink" in request.form.keys():
             #全ての項目が入力され、値段と在庫数が整数の場合
             if (add_image != "" and add_name != "" and add_price != "" and add_number != "" and status_selector != "") and (add_number.isdecimal() == True and add_price.isdecimal() == True):
@@ -704,8 +716,7 @@ def admin():
                 add_message = "＊追加失敗：全ての項目を入力してください"
 
 
-
-        #在庫変更のSQL処理
+        #在庫変更のボタンが押された場合ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
         elif "change_stock_id" in request.form.keys():
             #入力欄の値が変更されたときのみデータベース更新
             if update_stock["stock"] != change_stock:
@@ -721,8 +732,7 @@ def admin():
                 change_message = "＊" + update_stock["name"] + "の値が変更されていません"
 
 
-
-        #公開・非公開のSQL処理
+        #公開・非公開のボタンが押された場合ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
         elif "change_status" in request.form.keys():
             #現在のステータスが公開(1)の場合、非公開(0)に変更
             if update_status["status"] == 1:
@@ -743,26 +753,31 @@ def admin():
                 change_message = "＊" + update_status["name"] + "を公開にしました"
 
 
-
-        #どのボタンも押されていない場合(最初のページを表示する)
+        #どのボタンも押されていない場合(最初のページを表示するがここでは何もしない)ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
         else:
             pass
 
 
-        #いつでも実行する表示のためのSQL
+        #いつでも実行する表示のためのSQLーーーーーーーーーーーーーーーーーーーーーーーーーーーー
         cursor.execute(query)
-        #データベース変更後に再度リストに格納
+
+
+        #データベース変更後に再度リストに格納ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
         goods = []
         for (id, image, name, price, stock, status) in cursor:
             item = {"id" : id, "image" : image, "name" : name, "price" : price, "stock" : stock, "status" : status}
             goods.append(item)
 
+
+        #値の入った変数やリストをHTMLに渡すための変数に格納ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
         params = {
         "add_message" : add_message,
         "change_message" : change_message,
         "goods" : goods
         }
 
+
+    #もしユーザー名やパスワードなどに誤りがあった場合エラーを出すーーーーーーーーーーーーーーーーーーーーーーーーーーーー
     except mysql.connector.Error as err:
         if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
             print("ユーザ名かパスワードに問題があります。")
@@ -773,6 +788,8 @@ def admin():
     else:
         cnx.close()
 
+
+    #HTMLへ変数を送るーーーーーーーーーーーーーーーーーーーーーーーーーーーー
     return render_template("admin.html", **params)
 
 
@@ -784,43 +801,54 @@ def user():
     passwd   = 'kaA1ybB2ucC3d2c'    # MySQLのパスワード
     dbname   = 'mydb'    # データベース名
 
+
+    #変数定義ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+    #購入
     my_money = ""
     select_button = ""
+
+    #HTML受け渡し(判定)
     message = ""
     judge_money = ""
     judge_select = ""
-    bought = ""
     home = ""
 
+    #購入金額比較
+    bought = ""
 
 
-    #空欄の値を取得
+    #ボタンが押された場合にしか値を受け取らないーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+    #商品追加された場合、値を取得
     if "buy_drink" in request.form.keys():
         my_money = request.form.get("my_money")
         select_button = request.form.get("select_button")
+        #取得した値がもし文字列や数字ならdrink_idをint型にネスト(下記で条件分岐するため)
         if select_button != None and select_button != "":
             select_button = int(select_button)
 
 
+    #mysqlに接続ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
     try :
         cnx = mysql.connector.connect(host=host, user=username, password=passwd, database=dbname)
         cursor = cnx.cursor()
 
-        #常時実行するSQL
+
+        #いつでも実行する表示のためのSQLーーーーーーーーーーーーーーーーーーーーーーーーーーーー
         query = "SELECT dt.drink_id as drink_id, dt.drink_image as drink_image, dt.drink_name as drink_name, dt.price as price, st.stock as stock FROM drink_table as dt LEFT JOIN stock_table as st ON dt.drink_id = st.drink_id WHERE stock IS NOT NULL and status = 1"
         cursor.execute(query)
 
-        #クエリの中身を受け取る、クエリの中身をitemに格納する
+
+       #SQLで取得した値を格納(HTMLに送るためのリスト)ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
         goods = []
         for (id, image, name, price, stock) in cursor:
             item = {"id" : id, "image" : image, "name" : name, "price" : price, "stock" : stock}
             goods.append(item)
+            #商品購入ボタンの押された商品のidと同じ商品の情報を変数に格納
             if item["id"] == select_button:
                 bought = item
 
 
-
-        #商品購入ボタンが押された場合
+        #商品購入ボタンが押された場合ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
         if "buy_drink" in request.form.keys():
             #金額・商品共に数字が入力されており、足りている
             if (my_money != "" and my_money.isdecimal() == True) and select_button != None:
@@ -842,7 +870,6 @@ def user():
                 else:
                     message = "自動販売機結果"
                     judge_money = "＊お金が" + str(bought["price"] - my_money) + "円足りません"
-
 
 
             #金額入力もしくは商品の選択が行われていない
@@ -868,12 +895,13 @@ def user():
                     judge_money = "＊数字を入力してください"
 
 
-        #ホーム画面
+        ##どのボタンも押されていない場合(最初のページを表示する)ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
         else:
             message = "自動販売機"
             home = "home"
 
 
+        #値の入った変数やリストをHTMLに渡すための変数に格納ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
         params = {
         "judge_money" : judge_money,
         "judge_select" : judge_select,
@@ -882,6 +910,8 @@ def user():
         "home" : home
         }
 
+
+    #もしユーザー名やパスワードなどに誤りがあった場合エラーを出すーーーーーーーーーーーーーーーーーーーーーーーーーーーー
     except mysql.connector.Error as err:
         if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
             print("ユーザ名かパスワードに問題があります。")
@@ -892,4 +922,5 @@ def user():
     else:
         cnx.close()
 
+    #HTMLへ変数を送るーーーーーーーーーーーーーーーーーーーーーーーーーーーー
     return render_template("user.html", **params)
