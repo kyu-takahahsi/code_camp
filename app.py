@@ -849,7 +849,7 @@ def user():
                 bought = item
 
 
-        #商品購入ボタンが押された場合ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+        #商品購入ボタンが押された場合ーーーーーーーーーーーーーーーーーーーーーーーーーーーー-
         if "buy_drink" in request.form.keys():
             #金額・商品共に数字が入力されており、足りている
             if (my_money != "" and my_money.isdecimal() == True) and select_button != None and bought != "":
