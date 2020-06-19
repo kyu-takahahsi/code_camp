@@ -812,6 +812,7 @@ def user():
     judge_money = ""
     judge_select = ""
     home = ""
+    success = ""
 
     #購入金額比較
     bought = ""
@@ -865,6 +866,7 @@ def user():
                     cursor.execute(stock_update_query)
                     cursor.execute(history_query)
                     cnx.commit()
+                    success = bought["image"]
 
                 #金額・商品共に入力されているが、在庫がない
                 elif my_money >= bought["price"] and bought["stock"] == 0 and bought["status"] != "0":
@@ -914,6 +916,7 @@ def user():
 
         #値の入った変数やリストをHTMLに渡すための変数に格納ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
         params = {
+        "success" : success,
         "judge_money" : judge_money,
         "judge_select" : judge_select,
         "message" : message,
