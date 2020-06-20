@@ -670,8 +670,15 @@ def admin():
 
     #在庫数が変更された場合、値を取得
     if "change_stock_id" in request.form.keys():
-        change_stock = int(request.form.get("change_stock"))
+        change_stock = request.form.get("change_stock")
         change_stock_id = int(request.form.get("change_stock_id"))
+        #在庫数の値が数字ならint型に、文字列なら"文字列"に、空欄なら""に
+        if change_stock != None and change_stock != "" and change_stock.isdecimal() == True:
+            change_stock = int(request.form.get("change_stock"))
+        elif change_stock != None and change_stock != "" and change_stock.isdecimal() == False:
+            change_stock = "文字列"
+        else:
+            change_stock = ""
 
 
     #mysqlに接続ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
@@ -719,17 +726,25 @@ def admin():
         #在庫変更のボタンが押された場合ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
         elif "change_stock_id" in request.form.keys():
             #入力欄の値が変更されたときのみデータベース更新
-            if update_stock["stock"] != change_stock:
+            if update_stock["stock"] != change_stock and change_stock != "" and (change_stock != "文字列" and change_stock != "") :
                 stock_update_query_1 = f'UPDATE stock_table SET stock = {change_stock}, update_date = LOCALTIME() WHERE drink_id = {update_stock["id"]}'
                 stock_update_query_2 = f'UPDATE drink_table SET update_date = LOCALTIME() WHERE drink_id = {update_stock["id"]}'
                 cursor.execute(stock_update_query_1)
                 cursor.execute(stock_update_query_2)
                 cnx.commit()
-                change_message = "＊" + update_stock["name"] + "の在庫数が変更されました"
+                change_message = "＊成功：" + update_stock["name"] + "の在庫数が変更されました"
+
+            #入力欄の値が文字列で入力されている
+            elif update_stock["stock"] != change_stock and change_stock == "文字列":
+                change_message = "＊エラー：在庫数の値は0以上の整数で入力してください"
+
+            #入力欄の値が入力されていない
+            elif update_stock["stock"] != change_stock and change_stock == "":
+                change_message = "＊エラー：在庫数の値を入力してください"
 
             #入力欄の値が変更されていない
             else:
-                change_message = "＊" + update_stock["name"] + "の値が変更されていません"
+                change_message = "＊エラー：" + update_stock["name"] + "の値が変更されていません"
 
 
         #公開・非公開のボタンが押された場合ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
@@ -741,7 +756,7 @@ def admin():
                 cursor.execute(status_update_query_1)
                 cursor.execute(status_update_query_2)
                 cnx.commit()
-                change_message = "＊" + update_status["name"] + "を非公開にしました"
+                change_message = "＊成功：" + update_status["name"] + "を非公開にしました"
 
             #現在のステータスが非公開(0)の場合、公開(1)に変更
             elif update_status["status"] == 0:
@@ -750,7 +765,7 @@ def admin():
                 cursor.execute(status_update_query_1)
                 cursor.execute(status_update_query_2)
                 cnx.commit()
-                change_message = "＊" + update_status["name"] + "を公開にしました"
+                change_message = "＊成功：" + update_status["name"] + "を公開にしました"
 
 
         #どのボタンも押されていない場合(最初のページを表示するがここでは何もしない)ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
@@ -849,7 +864,7 @@ def user():
                 bought = item
 
 
-        #商品購入ボタンが押された場合ーーーーーーーーーーーーーーーーーーーーーーーーーーーー-
+        #商品購入ボタンが押された場合ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
         if "buy_drink" in request.form.keys():
             #金額・商品共に数字が入力されており、足りている
             if (my_money != "" and my_money.isdecimal() == True) and select_button != None and bought != "":
@@ -905,7 +920,7 @@ def user():
                 #金額が数字ではない
                 else:
                     message = "自動販売機結果"
-                    judge_money = "＊金額は数字を入力してください"
+                    judge_money = "＊金額は数字で入力してください"
 
 
         ##どのボタンも押されていない場合(最初のページを表示する)ーーーーーーーーーーーーーーーーーーーーーーーーーーーー

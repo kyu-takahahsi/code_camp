@@ -53,7 +53,9 @@
         <button type="submit" name="buy_drink" value="buy">商品購入</button>
     </form>
     {% else %}
+    {% if success %}
     <img src={{success}}>
+    {% endif %}
     <p>{{judge_money}}</p>
     <p>{{judge_select}}</p>
     <button onclick="history.back()">戻る</button>
