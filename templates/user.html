@@ -9,7 +9,7 @@
        }
 
        table {
-           width: 600px;
+           width: 400px;
        }
        p {
            font-size: 15px
@@ -20,6 +20,11 @@
             border-color: black;
             height: 10px;
         }
+        img{
+            width: 100px;
+            height: 100px;
+        }
+
    </style>
 </head>
 <body>
@@ -38,7 +43,7 @@
             </tr>
         {% for item in goods %}
             <tr>
-                <td><img src={{ item.image }}></td>
+                <td><image src="{{ item.image }}"></td>
                 <td>{{ item.name }}</td>
                 <td>{{ item.price }}</td>
                 <td>{{ item.stock }}</td>
@@ -54,7 +59,7 @@
     </form>
     {% else %}
     {% if success %}
-    <img src={{success}}>
+    <img src="{{success}}">
     {% endif %}
     <p>{{judge_money}}</p>
     <p>{{judge_select}}</p>
