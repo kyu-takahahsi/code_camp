@@ -673,7 +673,6 @@ def admin():
         status_selector = request.form.get("status_selector")
         #これでformから受け取った画像を保存する
         filename = secure_filename(add_image.filename)
-        #if re.search(r'jpeg|jpg|png', add_image):
         if filename != "" and filename != None:
             add_image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         else:
