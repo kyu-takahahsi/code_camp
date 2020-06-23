@@ -4,6 +4,10 @@ app = Flask(__name__)
 from flask import render_template
 #HTMLから抽出
 from flask import request
+#cookie
+from flask import make_response
+#session
+from flask import session
 #ランダム選択
 import random
 #データベース操作
@@ -164,8 +168,9 @@ def confirm():
       return render_template("confirm.html",result = result)
 """
 
-"""
+
 #10章課題3
+"""
 #チェックされたハンドを送信
 @app.route("/kadai3", methods=["GET"])
 def kadai3_post(my_hand="", your_hand="", result=""):
@@ -626,10 +631,11 @@ def transaction():
 
     return render_template("transaction.html", goods=goods)
 """
+#18章ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+"""
 UPLOAD_FOLDER = '/Users/kytakahashi/Downloads/my_project/static/'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-#18章ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
 #管理者画面
 @app.route("/admin", methods=["GET", "POST"])
 def admin():
@@ -677,7 +683,6 @@ def admin():
             add_image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         else:
             add_image = ""
-
 
 
     #ステータス変更された場合、値を取得
@@ -972,3 +977,96 @@ def user():
 
     #HTMLへ変数を送るーーーーーーーーーーーーーーーーーーーーーーーーーーーー
     return render_template("user.html", **params)
+"""
+#19章ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+"""
+from flask import Flask
+from flask import request
+from flask import render_template
+import mysql.connector
+# from model.employee import Employee
+import model.database as db
+from model.item import Item
+
+
+app = Flask(__name__)
+
+@app.route("/mysql_select")
+def mysql_select():
+    order = ""
+    if "order" in request.args.keys() :
+            order = request.args.get("order")
+
+    goods = db.get_goods(order)
+
+    params = {
+    "asc_check" : order == "ASC",
+    "desc_check" : order == "DESC",
+    "goods" : goods
+    }
+    return render_template("goods.html", **params)
+"""
+#20章ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+"""
+from flask import make_response
+@app.route("/cookie")
+def sample_cookie():
+    count = request.cookies.get('count')
+    if count is None:
+        count = 1
+    else:
+        count = int(count) + 1
+    response = make_response("{}回目の訪問です".format(count))
+    response.set_cookie('count', str(count))
+    return response
+"""
+"""
+app = Flask(__name__)
+app.secret_key = 'hogehoge'
+
+@app.route("/session")
+def sample_session():
+    count = session.get('count')
+    if count is None:
+        count = 1
+    else:
+        count = int(count) + 1
+    session["count"] = count
+    return "{}回目の訪問です".format(count)
+
+"""
+#20章課題(cookie)
+"""
+from flask import make_response
+@app.route("/cookie")
+def cookie():
+    #cookie上のcountとnow_loginの情報を入手å
+    count = request.cookies.get('count')
+    last_login = request.cookies.get('now_login',"")
+    #last_loginの値をセットした後でnow_loginに現在時刻を取得
+    now_login = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
+
+    if count is None:
+        count = 1
+    else:
+        count = int(count) + 1
+
+    params = {
+        "count" : count,
+        "last_login" : last_login,
+        "now_login" : now_login
+    }
+
+    response = make_response(render_template('cookie.html', **params))
+    #cookieに値をセットする(例：countは値が更新されている)
+    response.set_cookie('count', str(count))
+    response.set_cookie('last_login', last_login)
+    response.set_cookie('now_login', now_login)
+    print(count)
+    print(last_login)
+    print(now_login)
+    print(response)
+
+    return response
+"""
+#20章課題(sesion)

@@ -450,3 +450,7 @@ SELECT dt.drink_image as drink_image, dt.drink_id as drink_id, dt.drink_name as 
 
 SELECT dt.drink_image as drink_image, dt.drink_name as drink_name, dt.price as price, st.stock as stock FROM drink_table as dt LEFT JOIN stock_table as st ON dt.drink_id = st.drink_id
 
+--20章
+CREATE TABLE login_table(
+    login_date VARCHAR(50)
+    );

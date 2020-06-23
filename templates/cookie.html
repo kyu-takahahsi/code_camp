@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+   <meta charset="UTF-8">
+   <title>サンプル</title>
+</head>
+<body>
+    {% if count == 1 %}
+        <h2>今回が初めてのログインです</h2>
+        <p>{{now_login}}　(今回のログイン時間)</p>
+    {% else %}
+        <h2>今回で{{count}}回目のログインです</h2>
+        <p>{{now_login}}　(今回のログイン時間)</p>
+        <p>{{last_login}}　(前回のログイン時間)</p>
+    {% endif %}
+</body>
+</html>
