@@ -1038,7 +1038,7 @@ def sample_session():
 #20章課題(cookie)
 """
 from flask import make_response
-@app.route("/cookie")
+@app.route("/cookie", methods=["GET", "POST"])
 def cookie():
     #cookie上のcountとnow_loginの情報を入手å
     count = request.cookies.get('count')
@@ -1059,14 +1059,57 @@ def cookie():
 
     response = make_response(render_template('cookie.html', **params))
     #cookieに値をセットする(例：countは値が更新されている)
-    response.set_cookie('count', str(count))
-    response.set_cookie('last_login', last_login)
-    response.set_cookie('now_login', now_login)
-    print(count)
-    print(last_login)
-    print(now_login)
-    print(response)
+    if "delete_cookie" in request.form.keys():
+        response.set_cookie('count', str(count), expires=0)
+        response.set_cookie('last_login', last_login, expires=0)
+        response.set_cookie('now_login', now_login, expires=0)
+        print("cookie削除しました")
+    else:
+        response.set_cookie('count', str(count))
+        response.set_cookie('last_login', last_login)
+        response.set_cookie('now_login', now_login)
+        print("訪問しました")
 
     return response
 """
 #20章課題(sesion)
+"""
+from flask import session
+app = Flask(__name__)
+app.secret_key = 'hogehoge'
+
+@app.route("/session", methods=["GET", "POST"])
+def sample_session():
+    count = session.get('count')
+    last_login = session.get('now_login',"")
+    now_login = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
+
+    if count is None:
+        count = 1
+    else:
+        count = int(count) + 1
+
+    if "delete_cookie" in request.form.keys():
+        session["count"] = None
+        session["last_login"] = ""
+        session["now_login"] = ""
+    else:
+        session["count"] = count
+        session["last_login"] = last_login
+        session["now_login"] = now_login
+
+    params = {
+        "count" : count,
+        "last_login" : last_login,
+        "now_login" : now_login
+    }
+
+    response = render_template('session.html', **params)
+
+    return response
+"""
+#21章ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+
+
+
+
