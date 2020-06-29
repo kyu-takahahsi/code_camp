@@ -1,0 +1,10 @@
+リモート環境
+１、ホーム画面からrepositoryを選び、newで作成
+２、/の右に自由にリポジトリ名を記入してcreate
+３、表示されるURLをコピー
+ローカル環境
+１、git init
+２、git add .
+３、git commit -m "first commit"
+４、git remote add origin https://github.com/ユーザー名/リポジトリ名.git(リモート上で表示されていたURL)
+５、git push -u origin master

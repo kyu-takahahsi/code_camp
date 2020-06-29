@@ -29,8 +29,8 @@
 </head>
 <body>
     <h1>{{message}}</h1>
-    {% if home %}
     <form method="POST">
+    {% if home %}
         <label>値段　：<input type="text" name="my_money"></label><br>
         <hr>
         <table>
@@ -47,15 +47,17 @@
                 <td>{{ item.name }}</td>
                 <td>{{ item.price }}</td>
                 <td>{{ item.stock }}</td>
+                <input type="hidden" name="drink_name" value="{{ item.name }}">
+                <input type="hidden" name="drink_price" value="{{item.price}}">
                 {% if item.stock > 0 %}
-                <td><input type="radio" name="select_button" value={{item.id}} {{'checked' if button == "select_button"}}></td>
+                <td><input type="radio" name="drink_id" value={{item.id}} {{'checked' if button == "drink_id"}}></td>
                 {% else %}
                 <td>売り切れ</td>
                 {% endif %}
             </tr>
         {% endfor %}
         </table>
-        <button type="submit" name="buy_drink" value="buy">商品購入</button>
+        <button type="submit" name="buy_drink" value="buy!!">商品購入</button>
     </form>
     {% else %}
     {% if success %}

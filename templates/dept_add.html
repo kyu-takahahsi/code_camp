@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+   <meta charset="UTF-8">
+   <title>サンプル</title>
+   <style type="text/css">
+       table, td, th {
+           border: solid black 1px;
+       }
+
+       table {
+           width: 500px;
+       }
+       p {
+           font-size: 15px
+       }
+       hr {
+            border-width: 1px 0px 0px 0px;
+            border-style: dashed;
+            border-color: black;
+            height: 10px;
+        }
+        img{
+            width: 100px;
+            height: 100px;
+        }
+
+   </style>
+</head>
+<body>
+    {% if home %}
+    <h3>{{judge}}</h3>
+    <form method="POST" action="/dept">
+        <button type="submit" name="go_home" value="go_home">TOPページ</button>
+    </form>
+    {% else %}
+    <h1>部署データを新規作成します</h1>
+    <h3>{{judge}}</h3>
+    <form method="POST" action="/dept/add">
+        <label>部署名　：<input type="text" name="dept_name"></label><br>
+        <button type="submit" name="regist" value="push!!">設定</button><br>
+    </form>
+    <form method="POST" action="/dept">
+        <button type="submit" name="go_home" value="push!!">キャンセル</button>
+    </form>
+    {% endif %}
+</body>
