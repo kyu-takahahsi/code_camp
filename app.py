@@ -1218,7 +1218,7 @@ dbname   = 'mydb'    # データベース名
 
 #部署画面
 #ホーム画面
-
+"""
 @app.route("/dept", methods=["GET", "POST"])
 def dept():
     #mysqlに接続ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
@@ -1423,3 +1423,4 @@ def dept_edit():
             print(err)
     else:
         cnx.close()
+"""

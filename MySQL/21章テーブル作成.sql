@@ -4,6 +4,7 @@ CREATE TABLE emp_info_table(
     emp_name VARCHAR(100),
     age INT(100),
     sex VARCHAR(100),
+    pref VARCHAR(100),
     address VARCHAR(100),
     dept_id VARCHAR(100),
     join_date VARCHAR(100),

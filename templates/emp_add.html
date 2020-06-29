@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+   <meta charset="UTF-8">
+   <title>サンプル</title>
+   <style type="text/css">
+       table, td, th {
+           border: solid black 1px;
+       }
+       table {
+           width: 700px;
+       }
+       p {
+           font-size: 10px
+       }
+       hr {
+            border-width: 1px 0px 0px 0px;
+            border-style: dashed;
+            border-color: black;
+            height: 10px;
+        }
+        img{
+            width: 100px;
+            height: 100px;
+        }
+   </style>
+</head>
+<body>
+    <h1>社員データベースに変更をかけます</h1>
+    <form method="POST" enctype="multipart/form-data" action="/emp/add">
+        <label>名前　　　：<input type="text" name="emp_name"></label><br>
+        <label>年齢　　　：<input type="text" name="emp_age"></label><br>
+        <label>性別　　　：<input type="radio" name="emp_sex" value="男" {{'checked' if button == "男"}}>男性
+                        <input type="radio" name="emp_sex" value="女" {{'checked' if button == "女"}}>女性</label><br>
+        <label>郵便番号　：<input type="text" name="add_number"></label><br>
+        <label>都道府県　：<input type="text" name="add_number"></label><br>
+        <label>住所　　　：<input type="text" name="add_number"></label><br>
+        <label>写真　　　：<input type="file" id="add_image" name="add_image"></label><br>
+        <label>所属　　　：<select name="status_selector">
+            {% for item in emp %}
+                <label>写真　：<option value={{item.dept}} {% if nothing_check %} checked {% endif %}>{{item.dept}}</option>
+            {% endfor %}
+            </select><br>
+        <label>入社日　　：<input type="text" name="join_date"></label><br>
+        <label>退社日　　：<input type="text" name="retire_date"></label><br>
+        <p>＊全ての項目が入力選択必須</p>
+        <p>＊画像ファイルはJPEGもしくはPNGのみ</p>
+        <button type="submit" name="setting" value="success">設定</button>
+    </form>
+    <form method="POST" action="/emp">
+        <button type="submit" name="go_home" value="push!!">キャンセル</button>
+    </form>
+</body>
+</html>
+
