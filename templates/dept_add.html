@@ -37,7 +37,8 @@
     <h1>部署データを新規作成します</h1>
     <h3>{{judge}}</h3>
     <form method="POST" action="/dept/add">
-        <label>部署名　：<input type="text" name="dept_name"></label><br>
+        <input type="hidden" name="change_info" value={{change_info}}>
+        <label>部署名　：<input type="text" name="dept_name" value={{dept_name}}></label><br>
         <button type="submit" name="regist" value="push!!">設定</button><br>
     </form>
     <form method="POST" action="/dept">

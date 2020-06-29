@@ -28,7 +28,7 @@
 </head>
 <body>
     <h3>部署一覧</h3>
-    <h4>{{judge}}</h4>
+    <h4>{{message}}</h4>
     <table>
         <tr>
             <th>部署ID</th>
@@ -41,7 +41,7 @@
             <td>{{ item.name }}</td>
             <td>
                 <form method="POST" action="/dept/edit">
-                    <input type="hidden" name="emp_name" value="{{ item.name }}">
+                    <input type="hidden" name="dept_name" value="{{ item.name }}">
                     <button type="submit" name="change_info" value="{{item.id}}" >編集</button>
                     <button type="submit" name="delete_info" value="{{item.id}}" >削除</button>
                 </form>

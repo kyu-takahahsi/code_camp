@@ -1267,6 +1267,8 @@ def dept_add():
 
     #追加したい部署名
     dept_name = ""
+    change_id = ""
+    do_change = ""
 
     #メッセージ
     home = ""
@@ -1274,6 +1276,7 @@ def dept_add():
 
     #入力された部署名を取得
     dept_name = request.form.get("dept_name", "")
+    change_id = request.form.get("change_info", "")
 
 
     #mysqlに接続ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
@@ -1281,35 +1284,44 @@ def dept_add():
         cnx = mysql.connector.connect(host=host, user=username, password=passwd, database=dbname)
         cursor = cnx.cursor()
 
-
-        #設定のボタンが押された場合ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-        if "regist" in request.form.keys():
-            #値が入力されておらず空欄のまま
-            if dept_name == "" or not "部" in dept_name:
-                judge = "＊追加失敗：部署名を入力してください"
-
-            #条件通り
-            else:
-                dept_add = f"INSERT INTO dept_table (dept_name, edit_date, update_date) VALUES ('{dept_name}', LOCALTIME(), LOCALTIME())"
-                cursor.execute(dept_add)
-                cnx.commit()
-                judge = "＊追加成功：データベースへの追加が行われました"
-                home = "success"
-
-
         #常時実行するSQL
         query = "SELECT dept_id, dept_name FROM dept_table;"
         cursor.execute(query)
-
 
         #SQLで取得した値を格納(HTMLに送るためのリスト)
         dept_info = []
         for (id, name) in cursor:
             item = {"id" : id, "name" : name}
             dept_info.append(item)
+            if str(item["id"]) == change_id:
+                do_change = "Yes"
+
+
+        #設定のボタンが押された場合ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+        if "regist" in request.form.keys():
+            #値が入力されておらず空欄のまま
+            if dept_name == "" or not "部" in dept_name:
+                judge = "＊失敗：部署名を入力してください"
+
+            #編集ボタンから値の受け取りがあり、変更をする
+            elif do_change != "":
+                date_update = f'UPDATE dept_table SET dept_name = "{dept_name}", update_date = LOCALTIME() WHERE dept_id = {change_id}'
+                cursor.execute(date_update)
+                cnx.commit()
+                judge = "＊成功：データベースの変更が行われました"
+                home = "success"
+
+            #条件通りなので新規追加
+            else:
+                dept_add = f"INSERT INTO dept_table (dept_name, edit_date, update_date) VALUES ('{dept_name}', LOCALTIME(), LOCALTIME())"
+                cursor.execute(dept_add)
+                cnx.commit()
+                judge = "＊成功：データベースの追加が行われました"
+                home = "success"
 
 
         #値の入った変数やリストをHTMLに渡すための変数に格納ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+        cursor.execute(query)
         params = {
             "judge" : judge,
             "home" : home,
@@ -1343,7 +1355,6 @@ def dept_edit():
     dept_name = ""
 
     #メッセージ
-    home = ""
     message = ""
 
     #在庫数が変更された場合、値を取得(ボタンが押されたときに値を取りたい)
@@ -1360,7 +1371,7 @@ def dept_edit():
 
         #在庫変更のボタンが押された場合ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
         if "change_info" in request.form.keys() or "delete_info" in request.form.keys() :
-            #値が入力されておらず空欄のまま
+            #削除ボタンが押された
             if  delete_info != "":
                 dept_delete = f'DELETE FROM dept_table WHERE dept_id = {delete_info}'
                 date_update = f'UPDATE dept_table SET update_date = LOCALTIME() WHERE dept_id = {delete_info}'
@@ -1369,34 +1380,37 @@ def dept_edit():
                 cnx.commit()
                 message = "＊削除：" + dept_name + "をデータベースから削除しました"
 
-            #0以上の数字(条件通り)
+                #常時実行するSQL
+                query = "SELECT dept_id, dept_name FROM dept_table;"
+                cursor.execute(query)
+
+                #SQLで取得した値を格納(HTMLに送るためのリスト)
+                dept_info = []
+                for (id, name) in cursor:
+                    item = {"id" : id, "name" : name}
+                    dept_info.append(item)
+
+                #値の入った変数やリストをHTMLに渡すための変数に格納ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+                params = {
+                    "dept_info" : dept_info,
+                    "message" : message
+                }
+
+                #HTMLへ変数を送るーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+                return render_template("all_dept.html", **params)
+
+            #編集ボタンが押された
             elif change_info != "":
-                dept_delete = f'UPDATE dept_table SET dept_name = {dept_name} WHERE dept_id = {change_info}'
-                date_update = f'UPDATE dept_table SET update_date = LOCALTIME() WHERE dept_id = {change_info}'
-                cursor.execute(dept_delete)
-                cursor.execute(date_update)
-                cnx.commit()
-                message = "＊変更：" + dept_name + "に変更しました"
+                #値の入った変数やリストをHTMLに渡すための変数に格納ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+                params = {
+                    "change_info" : change_info,
+                    "dept_name" : dept_name
+                }
 
-        """
-        #常時実行するSQL
-        query = "SELECT dept_id, dept_name FROM dept_table;"
-        cursor.execute(query)
+                #追加のHTMLへ変数を送るーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+                return render_template("dept_add.html", **params)
 
 
-        #SQLで取得した値を格納(HTMLに送るためのリスト)
-        dept_info = []
-        for (id, name) in cursor:
-            item = {"id" : id, "name" : name}
-            dept_info.append(item)
-        """
-
-
-        #値の入った変数やリストをHTMLに渡すための変数に格納ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-        params = {
-            "message" : message,
-            "home" : home
-        }
 
 
     #もしユーザー名やパスワードなどに誤りがあった場合エラーを出すーーーーーーーーーーーーーーーーーーーーーーーーーーーー
@@ -1409,7 +1423,3 @@ def dept_edit():
             print(err)
     else:
         cnx.close()
-
-
-    #HTMLへ変数を送るーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-    return render_template("all_dept.html", **params)

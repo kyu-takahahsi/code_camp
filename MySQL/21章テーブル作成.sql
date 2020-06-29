@@ -12,6 +12,7 @@ CREATE TABLE emp_info_table(
     PRIMARY KEY (emp_id)
 );
 
+
 --社員画像テーブル：社員ID、名前、画像パス
 CREATE TABLE emp_img_table(
     --emp_id INT AUTO_INCREMENT,
@@ -28,3 +29,5 @@ CREATE TABLE dept_table(
     update_date VARCHAR(100),
     PRIMARY KEY (dept_id)
 );
+
+SELECT dept_id, dept_name FROM dept_table;
