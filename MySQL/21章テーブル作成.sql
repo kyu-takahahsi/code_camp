@@ -1,17 +1,19 @@
---社員情報テーブル：社員ID、名前、年齢、性別、住所、部署ID、登録日、更新日
+--社員情報テーブル：社員ID、名前、年齢、性別、郵便番号、都道府県、住所、部署ID、入社日、退社日、更新日
 CREATE TABLE emp_info_table(
     --emp_id INT AUTO_INCREMENT,
     emp_name VARCHAR(100),
     age INT(100),
     sex VARCHAR(100),
+    post_code VARCHAR(100),
     pref VARCHAR(100),
     address VARCHAR(100),
-    dept_id VARCHAR(100),
+    dept_id INT(100),
     join_date VARCHAR(100),
     retire_date VARCHAR(100),
     update_date VARCHAR(100),
     PRIMARY KEY (emp_id)
 );
+SELECT info.emp_id as emp_id, emp_name, age, sex, pref, address, dept_id, join_date, retire_date, emp_image FROM emp_info_table as info JOIN emp_img_table as img ON info.emp_id = img.emp_id;
 
 
 --社員画像テーブル：社員ID、名前、画像パス

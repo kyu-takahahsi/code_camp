@@ -39,13 +39,15 @@
         <tr>
             <td>{{ item.id }}</td>
             <td>{{ item.name }}</td>
-            <form method="POST" action="/emp/edit">
-                <input type="hidden" name="emp_name" value="{{ item.name }}">
-                <td>
+            <td>
+                <form method="POST" action="/emp/edit">
+                    <input type="hidden" name="emp_name" value="{{ item.name }}">
                     <button type="submit" name="change_info" value="{{item.id}}" >編集</button>
+                </form>
+                    <form method="POST" action="/emp/delete">
                     <button type="submit" name="delete_info" value="{{item.id}}" >削除</button>
-                </td>
-            </form>
+                </form>
+            </td>
         </tr>
        {% endfor %}
     </table>
