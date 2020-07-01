@@ -1336,6 +1336,15 @@ def emp_add():
                 judge = "＊失敗：名前と苗字の間に半角で空欄を入力してください"
                 result = "false"
 
+            elif retire_date == "":
+                info_add = f'INSERT INTO emp_info_table (emp_name, age, sex, post_code, pref, address, dept_id, join_date, retire_date, update_date) VALUES ("{emp_name}", {emp_age}, "{emp_sex}", "{emp_postal}", "{emp_pref}", "{emp_address}", {emp_dept}, "{join_date}", "在籍", LOCALTIME())'
+                img_add = f'INSERT INTO emp_img_table (emp_image, update_date) VALUES ("{add_emp_image}", LOCALTIME())'
+                cursor.execute(info_add)
+                cursor.execute(img_add)
+                cnx.commit()
+                judge = "＊成功：データベースの追加が行われました"
+                result = "success"
+
             #条件通りなので新規追加
             else:
                 info_add = f'INSERT INTO emp_info_table (emp_name, age, sex, post_code, pref, address, dept_id, join_date, retire_date, update_date) VALUES ("{emp_name}", {emp_age}, "{emp_sex}", "{emp_postal}", "{emp_pref}", "{emp_address}", {emp_dept}, "{join_date}", "{retire_date}", LOCALTIME())'
@@ -1411,7 +1420,7 @@ def emp_edit():
     result = ""
 
 
-    #在庫数が変更された場合、値を取得(ボタンが押されたときに値を取りたい)
+    #変更ボタンがおされた場合、値を取得(ボタンが押されたときに値を取りたい)
     change_info = request.form.get("change_info", "")
     #入力された部署名を取得
     emp_name = request.form.get("emp_name", "")
@@ -1428,10 +1437,8 @@ def emp_edit():
         filename = secure_filename(emp_image.filename)
         if filename != "":
             emp_image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            print("elif")
         else:
             emp_image = ""
-            print("else")
 
     #mysqlに接続ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
     try:
@@ -1441,12 +1448,34 @@ def emp_edit():
 
         #編集ボタンが押された場合ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
         if "setting" in request.form.keys():
-            if emp_name == "" or emp_age == "" or emp_sex == "" or emp_postal == "" or emp_pref == "" or emp_address == "" or emp_image == "" or emp_dept == "" or join_date == "":
+            if emp_name == "" or emp_age == "" or emp_sex == "" or emp_postal == "" or emp_pref == "" or emp_address == "" or emp_dept == "" or join_date == "" or retire_date == "":
                 judge = "＊失敗：データベースの変更ができませんでした"
                 result = "fales"
 
+            elif not emp_age.isdecimal():
+                judge = "＊失敗：年齢は半角数字で入力してください"
+                result = "false"
+
+            elif not re.match(r"[0-9]{3}-?[0-9]{4}", emp_postal):
+                judge = "＊失敗：郵便番号は半角数字で入力してください"
+                result = "false"
+
+            elif not re.search(r"[ ]", emp_name):
+                judge = "＊失敗：名前と苗字の間に半角で空欄を入力してください"
+                result = "false"
+
+            elif emp_image == "":
+                print("エリフーーーーーーー")
+                print(emp_name, emp_age, emp_sex, emp_pref, emp_address, emp_postal, emp_dept, join_date, retire_date, )
+                info_update = f'UPDATE emp_info_table SET emp_name = "{emp_name}", age = {emp_age}, sex = "{emp_sex}", post_code = "{emp_postal}", pref = "{emp_pref}", address = "{emp_address}", dept_id = {emp_dept}, join_date = "{join_date}", retire_date = "{retire_date}", update_date = LOCALTIME() WHERE emp_id = {change_info}'
+                cursor.execute(info_update)
+                cnx.commit()
+                judge = "＊成功：データベースの変更が行われました"
+                result = "success"
+
             else:
-                info_update = f'UPDATE emp_info_table SET emp_name = "{emp_name}", age = "{emp_age}", sex = "{emp_sex}", post_code = "{emp_postal}", pref = "{emp_pref}", address = "{emp_address}", dept_id = "{emp_dept}", join_date = "{join_date}", retire_date = "{retire_date}", update_date = LOCALTIME() WHERE emp_id = {change_info}'
+                print("エルスーーーーーーー")
+                info_update = f'UPDATE emp_info_table SET emp_name = "{emp_name}", age = {emp_age}, sex = "{emp_sex}", post_code = "{emp_postal}", pref = "{emp_pref}", address = "{emp_address}", dept_id = {emp_dept}, join_date = "{join_date}", retire_date = "{retire_date}", update_date = LOCALTIME() WHERE emp_id = {change_info}'
                 img_update = f'UPDATE emp_img_table SET emp_image = "{add_emp_image}", update_date = LOCALTIME() WHERE empt_id = {change_info}'
                 cursor.execute(info_update)
                 cursor.execute(img_update)
