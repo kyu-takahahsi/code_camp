@@ -14,7 +14,7 @@ CREATE TABLE emp_info_table(
     PRIMARY KEY (emp_id)
 );
 SELECT info.emp_id as emp_id, emp_name, age, sex, pref, address, dept_id, join_date, retire_date, emp_image FROM emp_info_table as info JOIN emp_img_table as img ON info.emp_id = img.emp_id;
-
+SELECT info.emp_id as emp_id, dept_name, emp_name, age, sex FROM emp_info_table as info JOIN dept_table ON info.dept_id = dept_table.dept_id;
 
 --社員画像テーブル：社員ID、名前、画像パス
 CREATE TABLE emp_img_table(
@@ -34,3 +34,8 @@ CREATE TABLE dept_table(
 );
 
 SELECT dept_id, dept_name FROM dept_table;
+
+UPDATE emp_info_table SET emp_name = "山田 孝之", age = 35, sex = "男", post_code = "321-0989", pref = "東京", address = "山田市", dept_id = 14, join_date = "2001-02-03", retire_date = "在籍", update_date = LOCALTIME() WHERE emp_id = 14;
+
+--部署ごとの人数カウント
+SELECT dt.dept_id, dept_name, COUNT(DISTINCT dt.dept_id) as count FROM dept_table as dt JOIN emp_info_table as eit ON dt.dept_id = eit.dept_id GROUP BY dept_id;

@@ -123,14 +123,15 @@
         <h1>社員データベースの情報を変更します</h1>
             {% for item in edit_info %}
             <form method="POST" enctype="multipart/form-data" action="/emp/edit">
+                <input type="hidden" name="change_info" value="{{ item.id }}">
                 <label>名前　　　：<input type="text" name="emp_name" value="{{item.name}}"></label>
                 <p>＊名前と苗字の間に半角で空欄を入力</p>
                 <hr>
                 <label>年齢　　　：<input type="text" name="emp_age" value="{{item.age}}"></label>
                 <p>＊年齢は半角数字で入力</p>
                 <hr>
-                <label>性別　　　：<input type="radio" name="emp_sex" value='{{item.sex}}' {{'checked' if value == '男'}}>男性
-                                <input type="radio" name="emp_sex" value='{{item.sex}}' {{'checked' if  value == '女'}}>女性</label>
+                <label>性別　　　：<input type="radio" name="emp_sex" value='男' {{'checked' if item.sex == '男'}}>男性
+                                <input type="radio" name="emp_sex" value='女' {{'checked' if  item.sex == '女'}}>女性</label>
                 <hr>
                                 <label>郵便番号　：<input type="text" name="emp_postal" value="{{item.post}}"></label>
                 <p>＊半角数字、半角ハイフンで入力(例：123-4567)</p>
@@ -190,12 +191,12 @@
                 <p>＊市町村以降を入力</p>
                 <hr>
                 <label>写真　　　：<img src="{{ item.image }}">
-                                <input type="file" id="emp_image" name="emp_image" value="{{item.image}}"></label>
+                                <input type="file" id="emp_image" name="emp_image"></label>
                 <p>＊画像ファイルはJPEGもしくはPNGのみ</p>
                 <hr>
                 <label>所属　　　：<select name="emp_dept">
                                     {% for item in dept_info %}
-                                        <option value="{{item.id}}" {% if nothing_check %} checked {% endif %}>{{item.name}}</option>
+                                        <option {% if item.id == dept_select %} selected {% endif %} value="{{item.id}}">{{item.name}}</option>
                                     {% endfor %}
                                 </select>
                 <hr>

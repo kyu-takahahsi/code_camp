@@ -33,12 +33,14 @@
         <tr>
             <th>社員ID</th>
             <th>名前</th>
-            <th>編集・削除</th>
+            <th>部署</th>
+            <th>更新</th>
         </tr>
        {% for item in emp_info %}
         <tr>
             <td>{{ item.id }}</td>
             <td>{{ item.name }}</td>
+            <td>{{ item.dept }}</td>
             <td>
                 <form method="POST" action="/emp/edit">
                     <input type="hidden" name="emp_name" value="{{ item.name }}">

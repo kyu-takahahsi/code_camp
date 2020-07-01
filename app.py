@@ -1228,14 +1228,14 @@ def emp():
 
 
         #常時実行するSQL
-        query = "SELECT emp_id, emp_name FROM emp_info_table;"
+        query = "SELECT emp_id, emp_name, dept_name FROM emp_info_table as eit JOIN dept_table as dt ON eit.dept_id = dt.dept_id;"
         cursor.execute(query)
 
 
         #SQLで取得した値を格納(HTMLに送るためのリスト)
         emp_info = []
-        for (id, name) in cursor:
-            item = {"id" : id, "name" : name}
+        for (id, name, dept) in cursor:
+            item = {"id" : id, "name" : name, "dept" : dept}
             emp_info.append(item)
 
 
@@ -1408,6 +1408,10 @@ def emp_edit():
     join_date = ""
     retire_date = ""
 
+    #セレクターのため
+    dept_select = ""
+    pref_select = ""
+
     #画像のための変数
     add_emp_image = ""
     filename = ""
@@ -1422,6 +1426,7 @@ def emp_edit():
 
     #変更ボタンがおされた場合、値を取得(ボタンが押されたときに値を取りたい)
     change_info = request.form.get("change_info", "")
+    print(change_info)
     #入力された部署名を取得
     emp_name = request.form.get("emp_name", "")
     emp_age = request.form.get("emp_age", "")
@@ -1439,6 +1444,7 @@ def emp_edit():
             emp_image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         else:
             emp_image = ""
+
 
     #mysqlに接続ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
     try:
@@ -1466,12 +1472,12 @@ def emp_edit():
 
             elif emp_image == "":
                 print("エリフーーーーーーー")
-                print(emp_name, emp_age, emp_sex, emp_pref, emp_address, emp_postal, emp_dept, join_date, retire_date, )
                 info_update = f'UPDATE emp_info_table SET emp_name = "{emp_name}", age = {emp_age}, sex = "{emp_sex}", post_code = "{emp_postal}", pref = "{emp_pref}", address = "{emp_address}", dept_id = {emp_dept}, join_date = "{join_date}", retire_date = "{retire_date}", update_date = LOCALTIME() WHERE emp_id = {change_info}'
                 cursor.execute(info_update)
                 cnx.commit()
                 judge = "＊成功：データベースの変更が行われました"
                 result = "success"
+                print(emp_name, emp_age, emp_sex, emp_pref, emp_address, emp_postal, emp_dept, join_date, retire_date, change_info)
 
             else:
                 print("エルスーーーーーーー")
@@ -1497,6 +1503,8 @@ def emp_edit():
             item = {"id" : id, "name" : name, "age" : age, "sex" : sex, "post" : post, "pref" : pref, "address" : address, "dept" : dept, "join" : join, "retire" : retire , "image" : image}
             if str(item["id"]) == change_info:
                 edit_info.append(item)
+                dept_select = item["dept"]
+                pref_select = item["pref"]
 
 
         #常時実行するSQL
@@ -1511,6 +1519,8 @@ def emp_edit():
 
         #値の入った変数やリストをHTMLに渡すための変数に格納ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
         params = {
+            "pref_select" : pref_select,
+            "dept_select" : dept_select,
             "dept_info" : dept_info,
             "edit_info" : edit_info,
             "result" : result,
