@@ -124,6 +124,7 @@
             {% for item in edit_info %}
             <form method="POST" enctype="multipart/form-data" action="/emp/edit">
                 <input type="hidden" name="change_info" value="{{ item.id }}">
+                <input type="hidden" name="image_id" value="{{ item.image_id }}">
                 <label>名前　　　：<input type="text" name="emp_name" value="{{item.name}}"></label>
                 <p>＊名前と苗字の間に半角で空欄を入力</p>
                 <hr>

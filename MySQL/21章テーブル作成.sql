@@ -1,9 +1,10 @@
---社員情報テーブル：社員ID、名前、年齢、性別、郵便番号、都道府県、住所、部署ID、入社日、退社日、更新日
+--社員情報テーブル：社員ID、名前、年齢、性別、写真ID、郵便番号、都道府県、住所、部署ID、入社日、退社日、更新日
 CREATE TABLE emp_info_table(
     --emp_id INT AUTO_INCREMENT,
     emp_name VARCHAR(100),
     age INT(100),
     sex VARCHAR(100),
+    image_id VARCHAR(100),
     post_code VARCHAR(100),
     pref VARCHAR(100),
     address VARCHAR(100),
@@ -15,16 +16,16 @@ CREATE TABLE emp_info_table(
 );
 SELECT info.emp_id as emp_id, emp_name, age, sex, pref, address, dept_id, join_date, retire_date, emp_image FROM emp_info_table as info JOIN emp_img_table as img ON info.emp_id = img.emp_id;
 SELECT info.emp_id as emp_id, dept_name, emp_name, age, sex FROM emp_info_table as info JOIN dept_table ON info.dept_id = dept_table.dept_id;
+SELECT emp_id, emp_name, age, sex, image_id post_code, pref, dept_id, join_date, retire_date FROM emp_info_table;
 
---社員画像テーブル：社員ID、名前、画像パス
+--社員画像テーブル：写真ID、画像パス、更新日
 CREATE TABLE emp_img_table(
-    --emp_id INT AUTO_INCREMENT,
+    image_id VARCHAR(100),
     emp_image VARCHAR(100),
-    update_date VARCHAR(100),
-    PRIMARY KEY (emp_id)
+    update_date VARCHAR(100)
 );
 
---部署情報テーブル：社員ID、部署名、部署ID
+--部署情報テーブル：部署ID、部署名、作成日、更新日
 CREATE TABLE dept_table(
     --dept_id INT AUTO_INCREMENT,
     dept_name VARCHAR(100),
@@ -39,3 +40,9 @@ UPDATE emp_info_table SET emp_name = "山田 孝之", age = 35, sex = "男", pos
 
 --部署ごとの人数カウント
 SELECT dt.dept_id, dept_name, COUNT(DISTINCT dt.dept_id) as count FROM dept_table as dt JOIN emp_info_table as eit ON dt.dept_id = eit.dept_id GROUP BY dept_id;
+
+--CSV出力
+--SELECT * FROM emp_info_table INTO OUTFILE '/Users/kytakahashi/Downloads/プログラム/my_project/output/emp_info_table.csv' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"';
+
+--/usr/local/mysql/etc/my.cnf
+--/etc/my.cnf /etc/mysql/my.cnf /usr/local/mysql/etc/my.cnf ~/.my.cnf

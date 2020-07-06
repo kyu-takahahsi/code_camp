@@ -1,13 +1,13 @@
-from flask import Flask, flash, redirect, url_for
+from flask import Flask, render_template, request, make_response, session, flash, redirect, url_for
 app = Flask(__name__)
 #HTMLに反映
-from flask import render_template
+#from flask import render_template
 #HTMLから抽出
-from flask import request
+#from flask import request
 #cookie
-from flask import make_response
+#from flask import make_response
 #session
-from flask import session
+#from flask import session
 #ランダム選択
 import random
 #データベース操作
@@ -22,6 +22,8 @@ import os
 #from PIL import Image
 #画像保存のため
 from werkzeug.utils import secure_filename
+#ランダムな文字列作成
+import string
 #7章ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
 """
 #/がアドレスの最後につく
@@ -442,8 +444,7 @@ def mysql_sample():
     #空欄に値が入力されていたら取得
     if "add_name" in request.form.keys() and "add_comment" in request.form.keys():
         add_name = request.form.get("add_name")
-        add_comment = re
-        quest.form.get("add_comment")
+        add_comment = request.form.get("add_comment")
 
 
     try:
@@ -1218,6 +1219,7 @@ passwd   = 'kaA1ybB2ucC3d2c'    # MySQLのパスワード
 dbname   = 'mydb'    # データベース名
 
 #社員画面
+
 #ホーム画面
 @app.route("/emp", methods=["GET", "POST"])
 def emp():
@@ -1228,7 +1230,7 @@ def emp():
 
 
         #常時実行するSQL
-        query = "SELECT emp_id, emp_name, dept_name FROM emp_info_table as eit JOIN dept_table as dt ON eit.dept_id = dt.dept_id;"
+        query = "SELECT emp_id, emp_name, dept_name FROM emp_info_table as eit JOIN dept_table as dt ON eit.dept_id = dt.dept_id ORDER BY emp_id;"
         cursor.execute(query)
 
 
@@ -1269,6 +1271,7 @@ def emp_add():
     emp_name = ""
     emp_age = ""
     emp_sex = ""
+    image_id = ""
     emp_postal = ""
     emp_pref = ""
     emp_address = ""
@@ -1302,10 +1305,11 @@ def emp_add():
         filename = secure_filename(emp_image.filename)
         if filename != "":
             emp_image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            print("elif")
         else:
             emp_image = ""
-            print("else")
+    for i in range(10):
+        image_id += (random.choice(string.ascii_letters))
+    print(image_id)
 
 
     #mysqlに接続ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
@@ -1336,9 +1340,10 @@ def emp_add():
                 judge = "＊失敗：名前と苗字の間に半角で空欄を入力してください"
                 result = "false"
 
+            #条件通りなので新規追加(退職日時なし)
             elif retire_date == "":
-                info_add = f'INSERT INTO emp_info_table (emp_name, age, sex, post_code, pref, address, dept_id, join_date, retire_date, update_date) VALUES ("{emp_name}", {emp_age}, "{emp_sex}", "{emp_postal}", "{emp_pref}", "{emp_address}", {emp_dept}, "{join_date}", "在籍", LOCALTIME())'
-                img_add = f'INSERT INTO emp_img_table (emp_image, update_date) VALUES ("{add_emp_image}", LOCALTIME())'
+                info_add = f'INSERT INTO emp_info_table (emp_name, age, sex, image_id, post_code, pref, address, dept_id, join_date, retire_date, update_date) VALUES ("{emp_name}", {emp_age}, "{emp_sex}", "{image_id}", "{emp_postal}", "{emp_pref}", "{emp_address}", {emp_dept}, "{join_date}", "在籍", LOCALTIME())'
+                img_add = f'INSERT INTO emp_img_table (image_id, emp_image, update_date) VALUES ("{image_id}", "{add_emp_image}", LOCALTIME())'
                 cursor.execute(info_add)
                 cursor.execute(img_add)
                 cnx.commit()
@@ -1347,8 +1352,8 @@ def emp_add():
 
             #条件通りなので新規追加
             else:
-                info_add = f'INSERT INTO emp_info_table (emp_name, age, sex, post_code, pref, address, dept_id, join_date, retire_date, update_date) VALUES ("{emp_name}", {emp_age}, "{emp_sex}", "{emp_postal}", "{emp_pref}", "{emp_address}", {emp_dept}, "{join_date}", "{retire_date}", LOCALTIME())'
-                img_add = f'INSERT INTO emp_img_table (emp_image, update_date) VALUES ("{add_emp_image}", LOCALTIME())'
+                info_add = f'INSERT INTO emp_info_table (emp_name, age, sex, image_id, post_code, pref, address, dept_id, join_date, retire_date, update_date) VALUES ("{emp_name}", {emp_age}, "{emp_sex}", "{image_id}", "{emp_postal}", "{emp_pref}", "{emp_address}", {emp_dept}, "{join_date}", "{retire_date}", LOCALTIME())'
+                img_add = f'INSERT INTO emp_img_table (image_id, emp_image, update_date) VALUES ("{image_id}", "{add_emp_image}", LOCALTIME())'
                 cursor.execute(info_add)
                 cursor.execute(img_add)
                 cnx.commit()
@@ -1357,7 +1362,7 @@ def emp_add():
 
 
         #常時実行するSQL
-        query = "SELECT dept_id, dept_name FROM dept_table;"
+        query = "SELECT dept_id, dept_name FROM dept_table ORDER BY dept_id;"
         cursor.execute(query)
 
         #SQLで取得した値を格納(HTMLに送るためのリスト)
@@ -1407,6 +1412,7 @@ def emp_edit():
     emp_dept = ""
     join_date = ""
     retire_date = ""
+    image_id = ""
 
     #セレクターのため
     dept_select = ""
@@ -1444,6 +1450,8 @@ def emp_edit():
             emp_image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         else:
             emp_image = ""
+    image_id = request.form.get("image_id", "")
+    print(image_id)
 
 
     #mysqlに接続ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
@@ -1482,7 +1490,7 @@ def emp_edit():
             else:
                 print("エルスーーーーーーー")
                 info_update = f'UPDATE emp_info_table SET emp_name = "{emp_name}", age = {emp_age}, sex = "{emp_sex}", post_code = "{emp_postal}", pref = "{emp_pref}", address = "{emp_address}", dept_id = {emp_dept}, join_date = "{join_date}", retire_date = "{retire_date}", update_date = LOCALTIME() WHERE emp_id = {change_info}'
-                img_update = f'UPDATE emp_img_table SET emp_image = "{add_emp_image}", update_date = LOCALTIME() WHERE empt_id = {change_info}'
+                img_update = f'UPDATE emp_img_table SET emp_image = "{add_emp_image}", update_date = LOCALTIME() WHERE image_id = "{image_id}"'
                 cursor.execute(info_update)
                 cursor.execute(img_update)
                 cnx.commit()
@@ -1490,25 +1498,25 @@ def emp_edit():
                 result = "success"
 
 
-
         #常時実行するSQL
-        query = "SELECT info.emp_id as emp_id, emp_name, age, sex, post_code, pref, address, dept_id, join_date, retire_date, emp_image FROM emp_info_table as info JOIN emp_img_table as img ON info.emp_id = img.emp_id;"
+        query = "SELECT info.emp_id as emp_id, emp_name, age, sex, info.image_id, post_code, pref, address, dept_id, join_date, retire_date, emp_image FROM emp_info_table as info JOIN emp_img_table as img ON info.image_id = img.image_id;"
         cursor.execute(query)
 
 
         #SQLで取得した値を格納(HTMLに送るためのリスト)
         edit_info = []
         #社員ID、名前、年齢、性別、都道府県、住所、部署ID、入社日、退社日、画像
-        for (id, name, age, sex, post, pref, address, dept, join, retire, image) in cursor:
-            item = {"id" : id, "name" : name, "age" : age, "sex" : sex, "post" : post, "pref" : pref, "address" : address, "dept" : dept, "join" : join, "retire" : retire , "image" : image}
+        for (id, name, age, sex, image_id, post, pref, address, dept, join, retire, image) in cursor:
+            item = {"id" : id, "name" : name, "age" : age, "sex" : sex, "image_id" : image_id,"post" : post, "pref" : pref, "address" : address, "dept" : dept, "join" : join, "retire" : retire , "image" : image}
             if str(item["id"]) == change_info:
                 edit_info.append(item)
                 dept_select = item["dept"]
                 pref_select = item["pref"]
+        print(edit_info)
 
 
         #常時実行するSQL
-        query = "SELECT dept_id, dept_name FROM dept_table;"
+        query = "SELECT dept_id, dept_name FROM dept_table ORDER BY dept_id;"
         cursor.execute(query)
 
         #SQLで取得した値を格納(HTMLに送るためのリスト)
@@ -1542,10 +1550,159 @@ def emp_edit():
     #HTMLへ変数を送るーーーーーーーーーーーーーーーーーーーーーーーーーーーー
     return render_template("emp_add.html", **params)
 
+
+#検索
+@app.route("/emp/search", methods=["POST"])
+def emp_search():
+
+    #検索条件
+    search_dept = ""
+    search_emp_id = ""
+    search_name = ""
+
+    #社員数計測
+    emp_count = 0
+
+
+    #検索条件の取得
+    search_dept = request.form.get("search_dept", "")
+    search_emp_id = request.form.get("search_emp_id", "")
+    search_name = request.form.get("search_name", "")
+
+
+    #mysqlに接続ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+    try :
+        cnx = mysql.connector.connect(host=host, user=username, password=passwd, database=dbname)
+        cursor = cnx.cursor()
+
+        #社員情報のSQL
+        query = f'SELECT emp_id, emp_name, dept_name FROM emp_info_table as eit JOIN dept_table as dt ON eit.dept_id = dt.dept_id WHERE emp_id IS NOT NULL '
+
+        #もし検索条件があれば条件を加えていく
+        if search_dept != "" or search_emp_id != "" or search_name != "":
+            if search_dept != "":
+                query += f'AND dt.dept_id = {search_dept} '
+                print("所属部署")
+            if search_emp_id != "":
+                query += f'AND emp_id = {search_emp_id} '
+                print("社員番号")
+            if search_name != "":
+                query += f'AND emp_name LIKE "%{search_name}%" '
+                print("名前")
+
+        query += 'ORDER BY emp_id'
+        #どんな時でも実行
+        cursor.execute(query)
+
+
+        #SQLで取得した値を格納(HTMLに送るためのリスト)
+        emp_info = []
+        for (id, name, dept) in cursor:
+            item = {"id" : id, "name" : name, "dept" : dept}
+            emp_info.append(item)
+            emp_count += 1
+
+
+        #部署セレクターのためのSQL
+        query = "SELECT dept_id, dept_name FROM dept_table ORDER BY dept_id;"
+        cursor.execute(query)
+
+
+        #SQLで取得した値を格納(HTMLに送るためのリスト)
+        dept_info = []
+        for (id, name) in cursor:
+            item = {"id" : id, "name" : name}
+            dept_info.append(item)
+
+        print(search_dept)
+
+
+        #値の入った変数やリストをHTMLに渡すための変数に格納ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+        params = {
+            "search_name" : search_name,
+            "search_emp_id" : search_emp_id,
+            "search_dept" : search_dept,
+            "emp_count" : emp_count,
+            "dept_info" : dept_info,
+            "emp_info" : emp_info
+        }
+
+
+    #もしユーザー名やパスワードなどに誤りがあった場合エラーを出すーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+    except mysql.connector.Error as err:
+        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+            print("ユーザ名かパスワードに問題があります。")
+        elif err.errno == errorcode.ER_BAD_DB_ERROR:
+            print("データベースが存在しません。")
+        else:
+            print(err)
+    else:
+        cnx.close()
+
+
+    #HTMLへ変数を送るーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+    return render_template("emp_search.html", **params)
+
+
+#CSVファイル出力
+@app.route("/emp/output", methods=["GET", "POST"])
+def emp_output():
+
+    #出力成功の文字
+    message = ""
+
+    #mysqlに接続ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+    try :
+        cnx = mysql.connector.connect(host=host, user=username, password=passwd, database=dbname)
+        cursor = cnx.cursor()
+
+
+        #CSVファイル出力のために実行するSQL
+        output_query = "SELECT * FROM emp_info_table INTO OUTFILE '/Users/kytakahashi/Downloads/プログラム/my_project/output/社員情報.csv' FIELDS TERMINATED BY ',';"
+        cursor.execute(output_query)
+        message = "成功：社員データをCSVファイルに出力しました"
+
+
+        #常時実行するSQL
+        query = "SELECT emp_id, emp_name, dept_name FROM emp_info_table as eit JOIN dept_table as dt ON eit.dept_id = dt.dept_id ORDER BY emp_id;"
+        cursor.execute(query)
+
+
+        #SQLで取得した値を格納(HTMLに送るためのリスト)
+        emp_info = []
+        for (id, name, dept) in cursor:
+            item = {"id" : id, "name" : name, "dept" : dept}
+            emp_info.append(item)
+
+
+        #値の入った変数やリストをHTMLに渡すための変数に格納ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+        params = {
+            "emp_info" : emp_info,
+            "message" : message
+        }
+
+
+    #もしユーザー名やパスワードなどに誤りがあった場合エラーを出すーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+    except mysql.connector.Error as err:
+        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+            print("ユーザ名かパスワードに問題があります。")
+        elif err.errno == errorcode.ER_BAD_DB_ERROR:
+            print("データベースが存在しません。")
+        else:
+            print(err)
+    else:
+        cnx.close()
+
+
+    #HTMLへ変数を送るーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+    return render_template("all_emp.html", **params)
+
+
+
+
 #削除
-"""
 @app.route("/emp/delete", methods=["POST"])
-def dept_delete():
+def emp_delete():
 
     #削除ボタンを押された部署のIDと名前
     delete_info = ""
@@ -1607,11 +1764,7 @@ def dept_delete():
         cnx.close()
 
     #HTMLへ変数を送るーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-    return render_template("all_dept.html", **params)
-"""
-
-
-
+    return render_template("all_emp.html", **params)
 
 
 
@@ -1620,7 +1773,6 @@ def dept_delete():
 
 #部署画面
 #ホーム画面
-
 @app.route("/dept", methods=["GET", "POST"])
 def dept():
     #mysqlに接続ーーーーーーーーーーーーーーーーーーーーーーーーーーーー

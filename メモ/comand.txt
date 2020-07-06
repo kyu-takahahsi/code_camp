@@ -23,3 +23,8 @@ pip install -r requirements.txt
 仮想環境構築、アクティブ
 python3 -m venv venv
 . venv/bin/activate
+
+途中から.gitignoreの反映方法
+・.gitignoreで不要なファイルを記述
+・git rm -r --cached .(git上のファイルを削除)
+・git add.　→　git commit -m ""　→　git push
