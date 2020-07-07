@@ -17,6 +17,9 @@ flask run
 bad interpreter:No such file or directoryの時お明日を確認する
 sudo vi /Users/kytakahashi/Downloads/my_project/venv/bin/flask
 
+requirements.txtに必要なパッケージを記述
+pip freeze > requirements.txt
+
 requirements.txtに記述されているのパッケージを一括インストール
 pip install -r requirements.txt
 
