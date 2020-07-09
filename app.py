@@ -1218,79 +1218,43 @@ username = 'root'  # MySQLのユーザ名
 passwd   = 'kaA1ybB2ucC3d2c'    # MySQLのパスワード
 dbname   = 'mydb'    # データベース名
 
-#社員画面
 
-#ホーム画面
-@app.route("/emp", methods=["GET", "POST"])
-def emp():
-    #mysqlに接続ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-    try :
-        cnx = mysql.connector.connect(host=host, user=username, password=passwd, database=dbname)
-        cursor = cnx.cursor()
+#データベースに接続
+def connectDatabase():
+    cnx = mysql.connector.connect(host=host, user=username, password=passwd, database=dbname)
+    cursor = cnx.cursor()
+    return cursor, cnx
 
 
-        #常時実行するSQL
-        query = "SELECT emp_id, emp_name, dept_name FROM emp_info_table as eit JOIN dept_table as dt ON eit.dept_id = dt.dept_id ORDER BY emp_id;"
-        cursor.execute(query)
+#従業員データを取得し、配列に代入する
+def tableDataStorage():
+    cursor, cnx = connectDatabase()
+    query = "SELECT emp_id, emp_name, dept_name FROM emp_info_table as eit JOIN dept_table as dt ON eit.dept_id = dt.dept_id ORDER BY emp_id;"
+    cursor.execute(query)
+    emp_info = []
+    for (id, name, dept) in cursor:
+        item = {"id" : id, "name" : name, "dept" : dept}
+        emp_info.append(item)
+    return emp_info
 
 
-        #SQLで取得した値を格納(HTMLに送るためのリスト)
-        emp_info = []
-        for (id, name, dept) in cursor:
-            item = {"id" : id, "name" : name, "dept" : dept}
-            emp_info.append(item)
-
-
-        #値の入った変数やリストをHTMLに渡すための変数に格納ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-        params = {
-            "emp_info" : emp_info
-        }
-
-
-    #もしユーザー名やパスワードなどに誤りがあった場合エラーを出すーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-    except mysql.connector.Error as err:
-        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-            print("ユーザ名かパスワードに問題があります。")
-        elif err.errno == errorcode.ER_BAD_DB_ERROR:
-            print("データベースが存在しません。")
-        else:
-            print(err)
-    else:
-        cnx.close()
-
-
-    #HTMLへ変数を送るーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+#社員情報を受け渡すーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+@app.route("/emp", methods=['GET', 'POST'])
+def employeeList():
+    emp_info = tableDataStorage()
+    params = {
+    "emp_info" : emp_info
+    }
     return render_template("all_emp.html", **params)
 
 
-#新規追加
-@app.route("/emp/add", methods=["POST"])
-def emp_add():
-
-    #追加したい部署名
-    emp_name = ""
-    emp_age = ""
-    emp_sex = ""
-    image_id = ""
-    emp_postal = ""
-    emp_pref = ""
-    emp_address = ""
-    emp_image = ""
-    emp_dept = ""
-    join_date = ""
-    retire_date = ""
-
-    #画像のための変数
-    add_emp_image = ""
-    filename = ""
 
 
-    #メッセージ
-    result = ""
-    judge = ""
-    add = "新規作成"
 
-    #入力された部署名を取得
+
+#HTMLから情報を受け取る
+def getEmpInfo():
+    add = "新規追加"
     emp_name = request.form.get("emp_name", "")
     emp_age = request.form.get("emp_age", "")
     emp_sex = request.form.get("emp_sex", "")
@@ -1301,99 +1265,117 @@ def emp_add():
     join_date = request.form.get("join_date", "")
     retire_date = request.form.get("retire_date", "")
     emp_image = request.files.get("emp_image", "")
+    image_id = ""
+    for i in range(10):
+        image_id += (random.choice(string.ascii_letters))
+    return add, emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, emp_image
+
+
+#画像の有無
+def imageSetVariable(emp_image):
+    add_emp_image = ""
     if emp_image != "":
         filename = secure_filename(emp_image.filename)
         if filename != "":
             emp_image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            add_emp_image = "../static/" + filename
         else:
             emp_image = ""
-    for i in range(10):
-        image_id += (random.choice(string.ascii_letters))
-    print(image_id)
+    return add_emp_image, emp_image
 
 
-    #mysqlに接続ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-    try:
-        cnx = mysql.connector.connect(host=host, user=username, password=passwd, database=dbname)
-        cursor = cnx.cursor()
+#部署セレクター
+def dataDeptSelector(cursor):
+    query = "SELECT dept_id, dept_name FROM dept_table ORDER BY dept_id;"
+    cursor.execute(query)
 
-        if emp_image != "" and emp_image != None:
-            add_emp_image = "../static/" + filename
+    dept_info = []
+    for (id, name) in cursor:
+        item = {"id" : id, "name" : name}
+        dept_info.append(item)
 
-
-        #設定のボタンが押された場合ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-        if "setting" in request.form.keys():
-            #値が入力されておらず空欄のまま
-            if emp_name == "" or emp_age == "" or emp_sex == "" or emp_postal == "" or emp_pref == "" or emp_address == "" or emp_image == "" or emp_dept == "" or join_date == "":
-                judge = "＊失敗：全ての項目を入力してください"
-                result = "false"
-
-            elif not emp_age.isdecimal():
-                judge = "＊失敗：年齢は半角数字で入力してください"
-                result = "false"
-
-            elif not re.match(r"[0-9]{3}-?[0-9]{4}", emp_postal):
-                judge = "＊失敗：郵便番号は半角数字で入力してください"
-                result = "false"
-
-            elif not re.search(r"[ ]", emp_name):
-                judge = "＊失敗：名前と苗字の間に半角で空欄を入力してください"
-                result = "false"
-
-            #条件通りなので新規追加(退職日時なし)
-            elif retire_date == "":
-                info_add = f'INSERT INTO emp_info_table (emp_name, age, sex, image_id, post_code, pref, address, dept_id, join_date, retire_date, update_date) VALUES ("{emp_name}", {emp_age}, "{emp_sex}", "{image_id}", "{emp_postal}", "{emp_pref}", "{emp_address}", {emp_dept}, "{join_date}", "在籍", LOCALTIME())'
-                img_add = f'INSERT INTO emp_img_table (image_id, emp_image, update_date) VALUES ("{image_id}", "{add_emp_image}", LOCALTIME())'
-                cursor.execute(info_add)
-                cursor.execute(img_add)
-                cnx.commit()
-                judge = "＊成功：データベースの追加が行われました"
-                result = "success"
-
-            #条件通りなので新規追加
-            else:
-                info_add = f'INSERT INTO emp_info_table (emp_name, age, sex, image_id, post_code, pref, address, dept_id, join_date, retire_date, update_date) VALUES ("{emp_name}", {emp_age}, "{emp_sex}", "{image_id}", "{emp_postal}", "{emp_pref}", "{emp_address}", {emp_dept}, "{join_date}", "{retire_date}", LOCALTIME())'
-                img_add = f'INSERT INTO emp_img_table (image_id, emp_image, update_date) VALUES ("{image_id}", "{add_emp_image}", LOCALTIME())'
-                cursor.execute(info_add)
-                cursor.execute(img_add)
-                cnx.commit()
-                judge = "＊成功：データベースの追加が行われました"
-                result = "success"
+    return dept_info
 
 
-        #常時実行するSQL
-        query = "SELECT dept_id, dept_name FROM dept_table ORDER BY dept_id;"
-        cursor.execute(query)
-
-        #SQLで取得した値を格納(HTMLに送るためのリスト)
-        dept_info = []
-        for (id, name) in cursor:
-            item = {"id" : id, "name" : name}
-            dept_info.append(item)
-
-        #値の入った変数やリストをHTMLに渡すための変数に格納ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-        params = {
-            "add" : add,
-            "judge" : judge,
-            "result" : result,
-            "dept_info" : dept_info
-        }
-
-
-    #もしユーザー名やパスワードなどに誤りがあった場合エラーを出すーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-    except mysql.connector.Error as err:
-        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-            print("ユーザ名かパスワードに問題があります。")
-        elif err.errno == errorcode.ER_BAD_DB_ERROR:
-            print("データベースが存在しません。")
-        else:
-            print(err)
+#新規追加クエリを保管
+def setAddQuery(emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, add_emp_image):
+    if retire_date == "":
+        info_add = f'INSERT INTO emp_info_table (emp_name, age, sex, image_id, post_code, pref, address, dept_id, join_date, retire_date, update_date) VALUES ("{emp_name}", {emp_age}, "{emp_sex}", "{image_id}", "{emp_postal}", "{emp_pref}", "{emp_address}", {emp_dept}, "{join_date}", "在籍", LOCALTIME())'
+        img_add = f'INSERT INTO emp_img_table (image_id, emp_image, update_date) VALUES ("{image_id}", "{add_emp_image}", LOCALTIME())'
     else:
-        cnx.close()
+        info_add = f'INSERT INTO emp_info_table (emp_name, age, sex, image_id, post_code, pref, address, dept_id, join_date, retire_date, update_date) VALUES ("{emp_name}", {emp_age}, "{emp_sex}", "{image_id}", "{emp_postal}", "{emp_pref}", "{emp_address}", {emp_dept}, "{join_date}", "{retire_date}", LOCALTIME())'
+        img_add = f'INSERT INTO emp_img_table (image_id, emp_image, update_date) VALUES ("{image_id}", "{add_emp_image}", LOCALTIME())'
+    return info_add, img_add
 
 
-    #HTMLへ変数を送るーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+#設定のボタンが押された場合
+def exeAddQuery(cursor, cnx,  emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, add_emp_image, emp_image, info_add, img_add):
+    judge = ""
+    result = ""
+    if "setting" in request.form.keys():
+        #値が入力されておらず空欄のまま
+        if emp_name == "" or emp_age == "" or emp_sex == "" or emp_postal == "" or emp_pref == "" or emp_address == "" or emp_image == "" or emp_dept == "" or join_date == "":
+            judge = "＊失敗：全ての項目を入力してください"
+            result = "false"
+
+        #年齢が数字以外で入力されている
+        elif not emp_age.isdecimal():
+            judge = "＊失敗：年齢は半角数字で入力してください"
+            result = "false"
+
+        #郵便番号が数字以外で入力されている
+        elif not re.match(r"[0-9]{3}-?[0-9]{4}", emp_postal):
+            judge = "＊失敗：郵便番号は半角数字で入力してください"
+            result = "false"
+
+        #名前の間に半角で空欄が入ってない
+        elif not re.search(r"[ ]", emp_name):
+            judge = "＊失敗：名前と苗字の間に半角で空欄を入力してください"
+            result = "false"
+
+        #条件通りなので新規追加
+        else:
+            cursor.execute(info_add)
+            cursor.execute(img_add)
+            cnx.commit()
+            judge = "＊成功：データベースの追加が行われました"
+            result = "success"
+
+    return judge, result
+
+
+#値を集約
+def correctValue(add, judge, result, dept_info):
+    params = {
+        "add" : add,
+        "judge" : judge,
+        "result" : result,
+        "dept_info" : dept_info
+    }
+    return params
+
+
+#新規追加URL
+@app.route("/emp/add", methods=["POST"])
+def addNewEmp():
+    add, emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, emp_image = getEmpInfo()
+
+    add_emp_image = imageSetVariable(emp_image)
+
+    cursor, cnx = connectDatabase()
+    dept_info = dataDeptSelector(cursor)
+
+    info_add, img_add = setAddQuery(emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, add_emp_image)
+    judge, result = exeAddQuery(cursor, cnx,  emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, add_emp_image, emp_image, info_add, img_add)
+    params = correctValue(add, judge, result, dept_info)
+
     return render_template("emp_add.html", **params)
+
+
+
+
+
+
 
 
 
@@ -1451,7 +1433,6 @@ def emp_edit():
         else:
             emp_image = ""
     image_id = request.form.get("image_id", "")
-    print(image_id)
 
 
     #mysqlに接続ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
