@@ -1360,7 +1360,7 @@ def correctValue(add, judge, result, dept_info):
 def addNewEmp():
     add, emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, emp_image = getEmpInfo()
 
-    add_emp_image = imageSetVariable(emp_image)
+    add_emp_image, emp_image = imageSetVariable(emp_image)
 
     cursor, cnx = connectDatabase()
     dept_info = dataDeptSelector(cursor)
