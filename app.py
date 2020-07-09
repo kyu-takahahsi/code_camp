@@ -1392,7 +1392,7 @@ def getChangeEmpInfo():
     emp_pref = request.form.get("emp_pref", "")
     emp_address = request.form.get("emp_address", "")
     emp_dept = request.form.get("emp_dept", "")
-    join_date = request.form.get("join_date", "")
+    join_date = request.form.get("retire_date", "")
     retire_date = request.form.get("retire_date", "")
     emp_image = request.files.get("emp_image", "")
     image_id = request.form.get("image_id", "")
@@ -1409,6 +1409,7 @@ def getEditEmpinfo(cursor, change_info):
     edit_info = []
     dept_select = ""
     pref_select = ""
+
     #社員ID、名前、年齢、性別、都道府県、住所、部署ID、入社日、退社日、画像
     for (id, name, age, sex, image_id, post, pref, address, dept, join, retire, image) in cursor:
         item = {"id" : id, "name" : name, "age" : age, "sex" : sex, "image_id" : image_id,"post" : post, "pref" : pref, "address" : address, "dept" : dept, "join" : join, "retire" : retire , "image" : image}
@@ -1416,18 +1417,21 @@ def getEditEmpinfo(cursor, change_info):
             edit_info.append(item)
             dept_select = item["dept"]
             pref_select = item["pref"]
-    return edit_info, dept_select, pref_select
 
+    return edit_info, dept_select, pref_select
 
 
 #更新用のクエリを保管
 def setEditQuery(change_info, emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, add_emp_image):
     img_update = ""
+
     if  add_emp_image == "":
         info_update = f'UPDATE emp_info_table SET emp_name = "{emp_name}", age = {emp_age}, sex = "{emp_sex}", post_code = "{emp_postal}", pref = "{emp_pref}", address = "{emp_address}", dept_id = {emp_dept}, join_date = "{join_date}", retire_date = "{retire_date}" WHERE emp_id = {change_info}'
+
     else:
         info_update = f'UPDATE emp_info_table SET emp_name = "{emp_name}", age = {emp_age}, sex = "{emp_sex}", post_code = "{emp_postal}", pref = "{emp_pref}", address = "{emp_address}", dept_id = {emp_dept}, join_date = "{join_date}", retire_date = "{retire_date}" WHERE emp_id = {change_info}'
         img_update = f'UPDATE emp_img_table SET emp_image = "{add_emp_image}" WHERE image_id = "{image_id}"'
+
     return info_update, img_update
 
 
@@ -1486,7 +1490,7 @@ def correctEditValue(pref_select, dept_select, dept_info, edit_info, judge, resu
 
 #編集のURL(部品を集めて実行する)
 @app.route("/emp/edit", methods=["POST"])
-def EditEmp():
+def editEmp():
     #値の取得
     change_info, emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, emp_image = getChangeEmpInfo()
 
@@ -1521,97 +1525,86 @@ def EditEmp():
 
 #ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
 
-#検索
-@app.route("/emp/search", methods=["POST"])
-def emp_search():
-
-    #検索条件
-    search_dept = ""
-    search_emp_id = ""
-    search_name = ""
-
-    #社員数計測
-    emp_count = 0
-
-
-    #検索条件の取得
+#検索条件の取得
+def getSearchEmpInfo():
     search_dept = request.form.get("search_dept", "")
     search_emp_id = request.form.get("search_emp_id", "")
     search_name = request.form.get("search_name", "")
 
-
-    #mysqlに接続ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-    try :
-        cnx = mysql.connector.connect(host=host, user=username, password=passwd, database=dbname)
-        cursor = cnx.cursor()
-
-        #社員情報のSQL
-        query = f'SELECT emp_id, emp_name, dept_name FROM emp_info_table as eit JOIN dept_table as dt ON eit.dept_id = dt.dept_id WHERE emp_id IS NOT NULL '
-
-        #もし検索条件があれば条件を加えていく
-        if search_dept != "" or search_emp_id != "" or search_name != "":
-            if search_dept != "":
-                query += f'AND dt.dept_id = {search_dept} '
-                print("所属部署")
-            if search_emp_id != "":
-                query += f'AND emp_id = {search_emp_id} '
-                print("社員番号")
-            if search_name != "":
-                query += f'AND emp_name LIKE "%{search_name}%" '
-                print("名前")
-
-        query += 'ORDER BY emp_id'
-        #どんな時でも実行
-        cursor.execute(query)
+    return search_dept, search_emp_id, search_name
 
 
-        #SQLで取得した値を格納(HTMLに送るためのリスト)
-        emp_info = []
-        for (id, name, dept) in cursor:
-            item = {"id" : id, "name" : name, "dept" : dept}
-            emp_info.append(item)
-            emp_count += 1
+#社員情報のSQL
+def setSearchQuery(search_dept, search_emp_id, search_name):
+    query = f'SELECT emp_id, emp_name, dept_name FROM emp_info_table as eit JOIN dept_table as dt ON eit.dept_id = dt.dept_id WHERE emp_id IS NOT NULL '
+    #もし検索条件があれば条件を加えていく
+    if search_dept != "" or search_emp_id != "" or search_name != "":
+        if search_dept != "":
+            query += f'AND dt.dept_id = {search_dept} '
+        if search_emp_id != "":
+            query += f'AND emp_id = {search_emp_id} '
+        if search_name != "":
+            query += f'AND emp_name LIKE "%{search_name}%" '
+    query += 'ORDER BY emp_id'
+
+    return query
 
 
-        #部署セレクターのためのSQL
-        query = "SELECT dept_id, dept_name FROM dept_table ORDER BY dept_id;"
-        cursor.execute(query)
+#SQLの結果をリストに格納
+def exeSearchQuery(cursor, query):
+    emp_count = 0
+    #どんな時でも実行
+    cursor.execute(query)
+    print(query)
+
+    #SQLで取得した値を格納(HTMLに送るためのリスト)
+    emp_info = []
+    for (id, name, dept) in cursor:
+        item = {"id" : id, "name" : name, "dept" : dept}
+        emp_info.append(item)
+        emp_count += 1
+
+    return emp_info, emp_count
 
 
-        #SQLで取得した値を格納(HTMLに送るためのリスト)
-        dept_info = []
-        for (id, name) in cursor:
-            item = {"id" : id, "name" : name}
-            dept_info.append(item)
-
-        print(search_dept)
-
-
-        #値の入った変数やリストをHTMLに渡すための変数に格納ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-        params = {
-            "search_name" : search_name,
-            "search_emp_id" : search_emp_id,
-            "search_dept" : search_dept,
-            "emp_count" : emp_count,
-            "dept_info" : dept_info,
-            "emp_info" : emp_info
-        }
+#値を集約
+def correctSearchValue(search_name, search_emp_id, search_dept, dept_info, emp_info, emp_count):
+    params = {
+        "search_name" : search_name,
+        "search_emp_id" : search_emp_id,
+        "search_dept" : search_dept,
+        "emp_count" : emp_count,
+        "dept_info" : dept_info,
+        "emp_info" : emp_info
+    }
+    return params
 
 
-    #もしユーザー名やパスワードなどに誤りがあった場合エラーを出すーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-    except mysql.connector.Error as err:
-        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-            print("ユーザ名かパスワードに問題があります。")
-        elif err.errno == errorcode.ER_BAD_DB_ERROR:
-            print("データベースが存在しません。")
-        else:
-            print(err)
-    else:
-        cnx.close()
+#検索
+@app.route("/emp/search", methods=["POST"])
+def searchEmp():
+    #検索条件の値の取得
+    search_dept, search_emp_id, search_name = getSearchEmpInfo()
 
+    #データベースに接続
+    cursor, cnx = connectDatabase()
 
-    #HTMLへ変数を送るーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+    #部署名セレクターのためのリスト
+    dept_info = dataDeptSelector(cursor)
+
+    #クエリの取得
+    query = setSearchQuery(search_dept, search_emp_id, search_name)
+
+    #クエリ実行するかの判定、結果
+    emp_info, emp_count = exeSearchQuery(cursor, query)
+
+    #HTMLに送る全ての値をparamsに格納
+    params = correctSearchValue(search_name, search_emp_id, search_dept, dept_info, emp_info, emp_count)
+    print(params)
+
     return render_template("emp_search.html", **params)
+
+
 #ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
 
 #CSVファイル出力
