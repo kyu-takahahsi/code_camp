@@ -1325,22 +1325,18 @@ def exeAddEmpQuery(cursor, cnx,  emp_name, emp_age, emp_sex, emp_postal, emp_pre
         if emp_name == "" or emp_age == "" or emp_sex == "" or emp_postal == "" or emp_pref == "" or emp_address == "" or emp_image == "" or emp_dept == "" or join_date == "":
             judge = "＊失敗：全ての項目を入力してください"
             result = "false"
-
         #年齢が数字以外で入力されている
         elif not emp_age.isdecimal():
             judge = "＊失敗：年齢は半角数字で入力してください"
             result = "false"
-
         #郵便番号が数字以外で入力されている
         elif not re.match(r"[0-9]{3}-?[0-9]{4}", emp_postal):
             judge = "＊失敗：郵便番号は半角数字で入力してください"
             result = "false"
-
         #名前の間に半角で空欄が入ってない
         elif not re.search(r"[ ]", emp_name):
             judge = "＊失敗：名前と苗字の間に半角で空欄を入力してください"
             result = "false"
-
         #条件通りなので新規追加
         else:
             cursor.execute(info_add)
@@ -1455,28 +1451,29 @@ def exeEditQuery(cursor, cnx,  emp_name, emp_age, emp_sex, emp_postal, emp_pref,
     result = ""
 
     if "setting" in request.form.keys():
+        #値が入力されておらず空欄のまま
         if emp_name == "" or emp_age == "" or emp_sex == "" or emp_postal == "" or emp_pref == "" or emp_address == "" or emp_dept == "" or join_date == "" or retire_date == "":
             judge = "＊失敗：データベースの変更ができませんでした"
             result = "fales"
-
+        #年齢が数字以外で入力されている
         elif not emp_age.isdecimal():
             judge = "＊失敗：年齢は半角数字で入力してください"
             result = "false"
-
+        #郵便番号が数字以外で入力されている
         elif not re.match(r"[0-9]{3}-?[0-9]{4}", emp_postal):
             judge = "＊失敗：郵便番号は半角数字で入力してください"
             result = "false"
-
+        #名前の間に半角で空欄が入ってない
         elif not re.search(r"[ ]", emp_name):
             judge = "＊失敗：名前と苗字の間に半角で空欄を入力してください"
             result = "false"
-
+        #条件通りなので新規追加(画像の変更なし)
         elif emp_image == "":
             cursor.execute(info_update)
             cnx.commit()
             judge = "＊成功：データベースの変更が行われました"
             result = "success"
-
+        #条件通りなので新規追加(画像の変更あり)
         else:
             cursor.execute(info_update)
             cursor.execute(img_update)
@@ -1585,6 +1582,7 @@ def correctSearchEmpValue(search_name, search_emp_id, search_dept, dept_info, em
         "dept_info" : dept_info,
         "emp_info" : emp_info
     }
+
     return params
 
 
@@ -1615,49 +1613,56 @@ def searchEmp():
 
 #ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
 
-#CSVファイル出力
+def downloads(cursor):
+    csv = ""
+    item = "社員ID, 名前, 年齢, 性別, 画像ID, 郵便番号, 都道府県, 部署ID, 入社日, 退社日, 画像パス\n"
+    query = "SELECT info.emp_id as emp_id, emp_name, age, sex, info.image_id, post_code, pref, address, dept_id, join_date, retire_date, emp_image FROM emp_info_table as info JOIN emp_img_table as img ON info.image_id = img.image_id;"
+    cursor.execute(query)
+    for (id, name, age, sex, image_id, post, pref, address, dept, join, retire, image) in cursor:
+        item += f"{id}, {name}, {age}, {sex}, {image_id}, {post}, {pref}, {address}, {dept}, {join}, {retire}, {image}\n"
+    csv = item
+
+    return csv
+
+
+@app.route('/emp/output', methods=["GET", "POST"])
+def outputCsv():
+    cursor, cnx = connectDatabase()
+    csv = downloads(cursor)
+    response = make_response(csv)
+    response.headers["Content-Disposition"] = f"attachment; filename=employee_information.csv"
+
+    return response
+
+
 """
+#CSVファイル出力
 @app.route("/emp/output", methods=["GET", "POST"])
-def emp_output():
+def outputInfo():
 
     #出力成功の文字
     message = ""
+    cursor, cnx = connectDatabase()
 
-    #mysqlに接続ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-    try :
-        cnx = mysql.connector.connect(host=host, user=username, password=passwd, database=dbname)
-        cursor = cnx.cursor()
+    #CSVファイル出力のために実行するSQL
+    if "info_output" in request.form.keys():
+        message = "成功：社員データをCSVファイルに出力しました"
 
+    #リストに社員情報格納
+    emp_info = tableDataStorage()
 
-        #CSVファイル出力のために実行するSQL
-        if "info_output" in request.form.keys():
-            output_query = "SELECT * FROM emp_info_table INTO OUTFILE '/Users/kytakahashi/Downloads/プログラム/my_project/output/社員情報.csv' FIELDS TERMINATED BY ',';"
-            cursor.execute(output_query)
-            message = "成功：社員データをCSVファイルに出力しました"
+    csv = downloads(cursor)
 
+    response = outputCsv(csv)
 
-        #常時実行するSQL
-        query = "SELECT emp_id, emp_name, dept_name FROM emp_info_table as eit JOIN dept_table as dt ON eit.dept_id = dt.dept_id ORDER BY emp_id;"
-        cursor.execute(query)
+    #値の入った変数やリストをHTMLに渡すための変数に格納
+    params = {
+    "emp_info" : emp_info,
+    "message" : message
+    }
 
-
-        #SQLで取得した値を格納(HTMLに送るためのリスト)
-        emp_info = []
-        for (id, name, dept) in cursor:
-            item = {"id" : id, "name" : name, "dept" : dept}
-            emp_info.append(item)
-
-
-        #値の入った変数やリストをHTMLに渡すための変数に格納ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-        params = {
-            "emp_info" : emp_info,
-            "message" : message
-        }
-
-
-    #HTMLへ変数を送るーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+    #HTMLへ変数を送る
     return render_template("all_emp.html", **params)
-
 """
 #ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
 
@@ -1777,7 +1782,6 @@ def exeAddDeptQuery(cursor, cnx, dept_name, dept_add):
         if dept_name == "" or not "部" in dept_name:
             judge = "＊失敗：部署名を入力してください"
             result = "false"
-
         #条件通りなので新規追加
         else:
             cursor.execute(dept_add)
@@ -1850,7 +1854,6 @@ def exeEditDeptQuery(cursor, cnx, change_info, dept_name, dept_update):
         if dept_name == "":
             judge = "＊失敗：データベースの変更ができませんでした"
             result = "fales"
-
         else:
             cursor.execute(dept_update)
             cnx.commit()
