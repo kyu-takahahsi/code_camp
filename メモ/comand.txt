@@ -28,6 +28,6 @@ python3 -m venv venv
 . venv/bin/activate
 
 途中から.gitignoreの反映方法
-・.gitignoreで不要なファイルを記述
+・.gitignoreで不要なファイルを記述、push
 ・git rm -r --cached .(git上のファイルを削除)
-・git add.　→　git commit -m ""　→　git push
+・git add.　→　git commit -m ""　→　git push(いつも通りの作業)

@@ -1231,18 +1231,18 @@ def connectDatabase():
 def tableDataStorage():
     cursor, cnx = connectDatabase()
 
-    query = "SELECT emp_id, emp_name, dept_name FROM emp_info_table as eit JOIN dept_table as dt ON eit.dept_id = dt.dept_id ORDER BY emp_id;"
+    query = "SELECT emp_id, emp_name, dept_name, image_id FROM emp_info_table as eit JOIN dept_table as dt ON eit.dept_id = dt.dept_id ORDER BY emp_id;"
     cursor.execute(query)
 
     emp_info = []
-    for (id, name, dept) in cursor:
-        item = {"id" : id, "name" : name, "dept" : dept}
+    for (id, name, dept, image_id) in cursor:
+        item = {"id" : id, "name" : name, "dept" : dept, "image_id": image_id}
         emp_info.append(item)
 
     return emp_info
 
 
-#社員情報を受け渡す
+#ホーム画面
 @app.route("/emp", methods=['GET', 'POST'])
 def employeeList():
     emp_info = tableDataStorage()
@@ -1588,7 +1588,7 @@ def correctSearchEmpValue(search_name, search_emp_id, search_dept, dept_info, em
     return params
 
 
-#検索
+#検索のURL(部品を集めて実行する)
 @app.route("/emp/search", methods=["POST"])
 def searchEmp():
     #検索条件の値の取得
@@ -1671,8 +1671,8 @@ def getDeleteEmpInfo():
 
 #情報削除用のクエリ
 def setDeleteEmpQuery(delete_info):
-    info_delete = f'DELETE FROM emp_info_table WHERE emp_id = {delete_info}'
-    img_delete = f'DELETE FROM emp_img_table WHERE emp_id = {delete_info}'
+    info_delete = f'DELETE FROM emp_info_table WHERE image_id = "{delete_info}"'
+    img_delete = f'DELETE FROM emp_img_table WHERE image_id = "{delete_info}"'
 
     return info_delete, img_delete
 
@@ -1686,7 +1686,7 @@ def exeDeleteEmpQuery(cursor, cnx, info_delete, img_delete, delete_info, emp_nam
         cursor.execute(info_delete)
         cursor.execute(img_delete)
         cnx.commit()
-        message = "＊削除：" + emp_name + "をデータベースから削除しました"
+        message = "＊成功：" + emp_name + "をデータベースから削除しました"
 
     return message
 
@@ -1701,7 +1701,7 @@ def correctDeleteEmpValue(emp_info, message):
     return params
 
 
-#削除
+#削除のURL(部品を集めて実行する)
 @app.route("/emp/delete", methods=["POST"])
 def deleteEmp():
     #検索条件の値の取得
@@ -1713,14 +1713,14 @@ def deleteEmp():
     #部署名セレクターのためのリスト
     dept_info = deptInfoData(cursor)
 
-    #社員情報のリスト
-    emp_info = tableDataStorage()
-
     #クエリの取得
     info_delete, img_delete = setDeleteEmpQuery(delete_info)
 
     #クエリ実行するかの判定、結果
     message = exeDeleteEmpQuery(cursor, cnx, info_delete, img_delete, delete_info, emp_name)
+
+    #社員情報のリスト
+    emp_info = tableDataStorage()
 
     #HTMLに送る全ての値をparamsに格納
     params = correctDeleteEmpValue(emp_info, message)
@@ -1800,7 +1800,7 @@ def correctAddDeptValue(add, judge, result, dept_info):
     return params
 
 
-#新規追加画面
+#新規追加URL(部品を集めて実行する)
 @app.route("/dept/add", methods=["POST"])
 def addNewDept():
     #追加するための値取得
@@ -1868,6 +1868,7 @@ def correctEditDeptValue(judge, result, change_info, dept_name):
         "change_info" : change_info,
         "dept_name" : dept_name
     }
+    print(params)
 
     return params
 
@@ -1876,7 +1877,7 @@ def correctEditDeptValue(judge, result, change_info, dept_name):
 @app.route("/dept/edit", methods=["POST"])
 def editDept():
     #追加するための値取得
-    change_info, dept_name = getChangeDeptInfo()
+    dept_name, change_info = getChangeDeptInfo()
 
     #データベース接続
     cursor, cnx = connectDatabase()
@@ -1885,7 +1886,7 @@ def editDept():
     dept_info = deptInfoData(cursor)
 
     #部署を更新するためのクエリ
-    dept_update = setAddDeptQuery(dept_name)
+    dept_update = setEditDeptQuery(change_info, dept_name)
 
     #条件による判定
     judge, result = exeEditDeptQuery(cursor, cnx, change_info, dept_name, dept_update)
@@ -1898,66 +1899,62 @@ def editDept():
 
 #ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
 
-#削除
-@app.route("/dept/delete", methods=["POST"])
-def dept_delete():
-
-    #削除ボタンを押された部署のIDと名前
-    delete_info = ""
-    dept_name = ""
-
-    #メッセージ
-    message = ""
-
-    #在削除ボタンが押された時に値取得
+#削除する部署の情報取得
+def getDeleteDeptInfo():
     delete_info = request.form.get("delete_info", "")
     dept_name = request.form.get("dept_name", "")
 
-
-    #mysqlに接続ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-    try:
-        cnx = mysql.connector.connect(host=host, user=username, password=passwd, database=dbname)
-        cursor = cnx.cursor()
+    return delete_info, dept_name
 
 
-        #在庫変更のボタンが押された場合ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-        if "delete_info" in request.form.keys() and delete_info != "":
-            #削除ボタンが押された
-            dept_delete = f'DELETE FROM dept_table WHERE dept_id = {delete_info}'
-            cursor.execute(dept_delete)
-            cnx.commit()
-            message = "＊成功：" + dept_name + "をデータベースから削除しました"
+#情報削除用のクエリ
+def setDeleteDeptQuery(delete_info):
+    dept_delete = f'DELETE FROM dept_table WHERE dept_id = {delete_info}'
+
+    return dept_delete
 
 
-        #常時実行するSQL
-        query = "SELECT dept_id, dept_name FROM dept_table;"
-        cursor.execute(query)
+#削除のクエリ
+def exeDeleteDeptQuery(cursor, cnx, delete_info, dept_name, dept_delete):
+    message = ""
+    if "delete_info" in request.form.keys() and delete_info != "":
+        cursor.execute(dept_delete)
+        cnx.commit()
+        message = "＊成功：" + dept_name + "をデータベースから削除しました"
+
+    return message
 
 
-        #SQLで取得した値を格納(HTMLに送るためのリスト)
-        dept_info = []
-        for (id, name) in cursor:
-            item = {"id" : id, "name" : name}
-            dept_info.append(item)
+#値を集約
+def correctDeleteDeptValue(dept_info, message):
+    params = {
+        "dept_info" : dept_info,
+        "message" : message
+    }
+
+    return params
 
 
-        #値の入った変数やリストをHTMLに渡すための変数に格納ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-        params = {
-            "dept_info" : dept_info,
-            "message" : message
-        }
+#削除のURL(部品を集めて実行する)
+@app.route("/dept/delete", methods=["POST"])
+def deleteDept():
+    #追加するための値取得
+    delete_info, dept_name = getDeleteDeptInfo()
 
+    #データベース接続
+    cursor, cnx = connectDatabase()
 
-    #もしユーザー名やパスワードなどに誤りがあった場合エラーを出すーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-    except mysql.connector.Error as err:
-        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-            print("ユーザ名かパスワードに問題があります。")
-        elif err.errno == errorcode.ER_BAD_DB_ERROR:
-            print("データベースが存在しません。")
-        else:
-            print(err)
-    else:
-        cnx.close()
+    #部署データを取得
+    dept_info = deptInfoData(cursor)
 
-    #HTMLへ変数を送るーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+    #部署を更新するためのクエリ
+    dept_delete = setDeleteDeptQuery(delete_info)
+
+    #条件による判定
+    message = exeDeleteDeptQuery(cursor, cnx, delete_info, dept_name, dept_delete)
+
+    #値を集約
+    params = correctDeleteDeptValue(dept_info, message)
+
+    #HTMLへ変数を送る
     return render_template("all_dept.html", **params)

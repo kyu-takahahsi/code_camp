@@ -47,7 +47,8 @@
                     <button type="submit" name="change_info" value="{{item.id}}" >編集</button>
                 </form>
                 <form method="POST" action="/emp/delete">
-                    <button type="submit" name="delete_info" value="{{item.id}}" >削除</button>
+                    <input type="hidden" name="emp_name" value="{{ item.name }}">
+                    <button type="submit" name="delete_info" value="{{item.image_id}}" >削除</button>
                 </form>
             </td>
         </tr>
