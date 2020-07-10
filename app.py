@@ -1223,18 +1223,22 @@ dbname   = 'mydb'    # データベース名
 def connectDatabase():
     cnx = mysql.connector.connect(host=host, user=username, password=passwd, database=dbname)
     cursor = cnx.cursor()
+
     return cursor, cnx
 
 
 #従業員データを取得し、配列に代入する
 def tableDataStorage():
     cursor, cnx = connectDatabase()
+
     query = "SELECT emp_id, emp_name, dept_name FROM emp_info_table as eit JOIN dept_table as dt ON eit.dept_id = dt.dept_id ORDER BY emp_id;"
     cursor.execute(query)
+
     emp_info = []
     for (id, name, dept) in cursor:
         item = {"id" : id, "name" : name, "dept" : dept}
         emp_info.append(item)
+
     return emp_info
 
 
@@ -1242,9 +1246,11 @@ def tableDataStorage():
 @app.route("/emp", methods=['GET', 'POST'])
 def employeeList():
     emp_info = tableDataStorage()
+
     params = {
     "emp_info" : emp_info
     }
+
     return render_template("all_emp.html", **params)
 
 
@@ -1265,12 +1271,14 @@ def getEmpInfo():
     image_id = ""
     for i in range(10):
         image_id += (random.choice(string.ascii_letters))
+
     return add, emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, emp_image
 
 
 #画像の有無
 def imageSetVariable(emp_image):
     add_emp_image = ""
+
     if emp_image != "":
         filename = secure_filename(emp_image.filename)
         if filename != "":
@@ -1278,11 +1286,12 @@ def imageSetVariable(emp_image):
             add_emp_image = "../static/" + filename
         else:
             emp_image = ""
+
     return add_emp_image, emp_image
 
 
 #部署セレクター
-def dataDeptSelector(cursor):
+def deptInfoData(cursor):
     query = "SELECT dept_id, dept_name FROM dept_table ORDER BY dept_id;"
     cursor.execute(query)
 
@@ -1295,20 +1304,22 @@ def dataDeptSelector(cursor):
 
 
 #新規追加クエリを保管
-def setAddQuery(emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, add_emp_image):
+def setAddEmpQuery(emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, add_emp_image):
     if retire_date == "":
         info_add = f'INSERT INTO emp_info_table (emp_name, age, sex, image_id, post_code, pref, address, dept_id, join_date, retire_date) VALUES ("{emp_name}", {emp_age}, "{emp_sex}", "{image_id}", "{emp_postal}", "{emp_pref}", "{emp_address}", {emp_dept}, "{join_date}", "在籍")'
         img_add = f'INSERT INTO emp_img_table (image_id, emp_image) VALUES ("{image_id}", "{add_emp_image}")'
     else:
         info_add = f'INSERT INTO emp_info_table (emp_name, age, sex, image_id, post_code, pref, address, dept_id, join_date, retire_date) VALUES ("{emp_name}", {emp_age}, "{emp_sex}", "{image_id}", "{emp_postal}", "{emp_pref}", "{emp_address}", {emp_dept}, "{join_date}", "{retire_date}")'
         img_add = f'INSERT INTO emp_img_table (image_id, emp_image) VALUES ("{image_id}", "{add_emp_image}")'
+
     return info_add, img_add
 
 
 #設定のボタンが押された場合
-def exeAddQuery(cursor, cnx,  emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, add_emp_image, emp_image, info_add, img_add):
+def exeAddEmpQuery(cursor, cnx,  emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, add_emp_image, emp_image, info_add, img_add):
     judge = ""
     result = ""
+
     if "setting" in request.form.keys():
         #値が入力されておらず空欄のまま
         if emp_name == "" or emp_age == "" or emp_sex == "" or emp_postal == "" or emp_pref == "" or emp_address == "" or emp_image == "" or emp_dept == "" or join_date == "":
@@ -1349,6 +1360,7 @@ def correctAddValue(add, judge, result, dept_info):
         "result" : result,
         "dept_info" : dept_info
     }
+
     return params
 
 
@@ -1365,17 +1377,18 @@ def addNewEmp():
     cursor, cnx = connectDatabase()
 
     #部署名セレクターのためのリスト
-    dept_info = dataDeptSelector(cursor)
+    dept_info = deptInfoData(cursor)
 
     #クエリの取得
-    info_add, img_add = setAddQuery(emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, add_emp_image)
+    info_add, img_add = setAddEmpQuery(emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, add_emp_image)
 
     #クエリ実行するかの判定、結果
-    judge, result = exeAddQuery(cursor, cnx,  emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, add_emp_image, emp_image, info_add, img_add)
+    judge, result = exeAddEmpQuery(cursor, cnx,  emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, add_emp_image, emp_image, info_add, img_add)
 
     #HTMLに送る全ての値をparamsに格納
     params = correctAddValue(add, judge, result, dept_info)
 
+    #HTMLへ変数を送る
     return render_template("emp_add.html", **params)
 
 #ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
@@ -1396,6 +1409,7 @@ def getChangeEmpInfo():
     retire_date = request.form.get("retire_date", "")
     emp_image = request.files.get("emp_image", "")
     image_id = request.form.get("image_id", "")
+
     return change_info, emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, emp_image
 
 
@@ -1422,12 +1436,11 @@ def getEditEmpinfo(cursor, change_info):
 
 
 #更新用のクエリを保管
-def setEditQuery(change_info, emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, add_emp_image):
+def setEditEmpQuery(change_info, emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, add_emp_image):
     img_update = ""
 
     if  add_emp_image == "":
         info_update = f'UPDATE emp_info_table SET emp_name = "{emp_name}", age = {emp_age}, sex = "{emp_sex}", post_code = "{emp_postal}", pref = "{emp_pref}", address = "{emp_address}", dept_id = {emp_dept}, join_date = "{join_date}", retire_date = "{retire_date}" WHERE emp_id = {change_info}'
-
     else:
         info_update = f'UPDATE emp_info_table SET emp_name = "{emp_name}", age = {emp_age}, sex = "{emp_sex}", post_code = "{emp_postal}", pref = "{emp_pref}", address = "{emp_address}", dept_id = {emp_dept}, join_date = "{join_date}", retire_date = "{retire_date}" WHERE emp_id = {change_info}'
         img_update = f'UPDATE emp_img_table SET emp_image = "{add_emp_image}" WHERE image_id = "{image_id}"'
@@ -1440,6 +1453,7 @@ def setEditQuery(change_info, emp_name, emp_age, emp_sex, emp_postal, emp_pref, 
 def exeEditQuery(cursor, cnx,  emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, add_emp_image, emp_image, info_update, img_update):
     judge = ""
     result = ""
+
     if "setting" in request.form.keys():
         if emp_name == "" or emp_age == "" or emp_sex == "" or emp_postal == "" or emp_pref == "" or emp_address == "" or emp_dept == "" or join_date == "" or retire_date == "":
             judge = "＊失敗：データベースの変更ができませんでした"
@@ -1485,6 +1499,7 @@ def correctEditValue(pref_select, dept_select, dept_info, edit_info, judge, resu
         "result" : result,
         "judge" : judge
     }
+
     return params
 
 
@@ -1501,11 +1516,13 @@ def editEmp():
     cursor, cnx = connectDatabase()
 
     #部署名セレクターのためのリスト
-    dept_info = dataDeptSelector(cursor)
+    dept_info = deptInfoData(cursor)
+
+    #編集を押した従業員のIDと都道府県を格納
     edit_info, dept_select, pref_select = getEditEmpinfo(cursor, change_info)
 
     #クエリの取得
-    info_update, img_update = setEditQuery(change_info, emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, add_emp_image)
+    info_update, img_update = setEditEmpQuery(change_info, emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, add_emp_image)
 
     #クエリ実行するかの判定、結果
     judge, result = exeEditQuery(cursor, cnx,  emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, add_emp_image, emp_image, info_update, img_update)
@@ -1513,14 +1530,8 @@ def editEmp():
     #HTMLに送る全ての値をparamsに格納
     params = correctEditValue(pref_select, dept_select, dept_info, edit_info, judge, result)
 
+    #HTMLへ変数を送る
     return render_template("emp_add.html", **params)
-
-
-
-
-
-
-
 
 
 #ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
@@ -1551,11 +1562,10 @@ def setSearchQuery(search_dept, search_emp_id, search_name):
 
 
 #SQLの結果をリストに格納
-def exeSearchQuery(cursor, query):
+def exeSearchEmpQuery(cursor, query):
     emp_count = 0
     #どんな時でも実行
     cursor.execute(query)
-    print(query)
 
     #SQLで取得した値を格納(HTMLに送るためのリスト)
     emp_info = []
@@ -1590,24 +1600,25 @@ def searchEmp():
     cursor, cnx = connectDatabase()
 
     #部署名セレクターのためのリスト
-    dept_info = dataDeptSelector(cursor)
+    dept_info = deptInfoData(cursor)
 
     #クエリの取得
     query = setSearchQuery(search_dept, search_emp_id, search_name)
 
     #クエリ実行するかの判定、結果
-    emp_info, emp_count = exeSearchQuery(cursor, query)
+    emp_info, emp_count = exeSearchEmpQuery(cursor, query)
 
     #HTMLに送る全ての値をparamsに格納
     params = correctSearchValue(search_name, search_emp_id, search_dept, dept_info, emp_info, emp_count)
-    print(params)
 
+    #HTMLへ変数を送る
     return render_template("emp_search.html", **params)
 
 
 #ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
 
 #CSVファイル出力
+"""
 @app.route("/emp/output", methods=["GET", "POST"])
 def emp_output():
 
@@ -1621,9 +1632,10 @@ def emp_output():
 
 
         #CSVファイル出力のために実行するSQL
-        output_query = "SELECT * FROM emp_info_table INTO OUTFILE '/Users/kytakahashi/Downloads/プログラム/my_project/output/社員情報.csv' FIELDS TERMINATED BY ',';"
-        cursor.execute(output_query)
-        message = "成功：社員データをCSVファイルに出力しました"
+        if "info_output" in request.form.keys():
+            output_query = "SELECT * FROM emp_info_table INTO OUTFILE '/Users/kytakahashi/Downloads/プログラム/my_project/output/社員情報.csv' FIELDS TERMINATED BY ',';"
+            cursor.execute(output_query)
+            message = "成功：社員データをCSVファイルに出力しました"
 
 
         #常時実行するSQL
@@ -1645,90 +1657,77 @@ def emp_output():
         }
 
 
-    #もしユーザー名やパスワードなどに誤りがあった場合エラーを出すーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-    except mysql.connector.Error as err:
-        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-            print("ユーザ名かパスワードに問題があります。")
-        elif err.errno == errorcode.ER_BAD_DB_ERROR:
-            print("データベースが存在しません。")
-        else:
-            print(err)
-    else:
-        cnx.close()
-
-
     #HTMLへ変数を送るーーーーーーーーーーーーーーーーーーーーーーーーーーーー
     return render_template("all_emp.html", **params)
 
+"""
+#ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
 
+#削除する社員の情報取得
+def getDeleteEmpInfo():
+    delete_info = request.form.get("delete_info", "")
+    emp_name = request.form.get("emp_name", "")
+
+    return delete_info, emp_name
+
+
+#情報削除用のクエリ
+def setDeleteEmpQuery(delete_info):
+    info_delete = f'DELETE FROM emp_info_table WHERE emp_id = {delete_info}'
+    img_delete = f'DELETE FROM emp_img_table WHERE emp_id = {delete_info}'
+
+    return info_delete, img_delete
+
+
+#削除のクエリ
+def exeDeleteEmpQuery(cursor, cnx, info_delete, img_delete, delete_info, emp_name):
+    message = ""
+
+    if "delete_info" in request.form.keys() and delete_info != "":
+        #削除ボタンが押された
+        cursor.execute(info_delete)
+        cursor.execute(img_delete)
+        cnx.commit()
+        message = "＊削除：" + emp_name + "をデータベースから削除しました"
+
+    return message
+
+
+#値を集約
+def correctDeleteValue(emp_info, message):
+    params = {
+        "emp_info" : emp_info,
+        "message" : message
+    }
+
+    return params
 
 
 #削除
 @app.route("/emp/delete", methods=["POST"])
-def emp_delete():
+def deleteEmp():
+    #検索条件の値の取得
+    delete_info, emp_name = getDeleteEmpInfo()
 
-    #削除ボタンを押された部署のIDと名前
-    delete_info = ""
-    emp_name = ""
+    #データベースに接続
+    cursor, cnx = connectDatabase()
 
-    #メッセージ
-    message = ""
+    #部署名セレクターのためのリスト
+    dept_info = deptInfoData(cursor)
 
-    #在削除ボタンが押された時に値取得
-    delete_info = request.form.get("delete_info", "")
-    emp_name = request.form.get("emp_name", "")
+    emp_info = tableDataStorage()
 
+    #クエリの取得
+    info_delete, img_delete = setDeleteEmpQuery(delete_info)
 
-    #mysqlに接続ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-    try:
-        cnx = mysql.connector.connect(host=host, user=username, password=passwd, database=dbname)
-        cursor = cnx.cursor()
+    #クエリ実行するかの判定、結果
+    message = exeDeleteEmpQuery(cursor, cnx, info_delete, img_delete, delete_info, emp_name)
 
+    #HTMLに送る全ての値をparamsに格納
+    params = correctDeleteValue(emp_info, message)
 
-        #在庫変更のボタンが押された場合ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-        if "delete_info" in request.form.keys() and delete_info != "":
-            #削除ボタンが押された
-            info_delete = f'DELETE FROM emp_info_table WHERE emp_id = {delete_info}'
-            img_delete = f'DELETE FROM emp_img_table WHERE emp_id = {delete_info}'
-            cursor.execute(info_delete)
-            cursor.execute(img_delete)
-            cnx.commit()
-            message = "＊削除：" + emp_name + "をデータベースから削除しました"
-
-
-        #常時実行するSQL
-        query = "SELECT emp_id, emp_name FROM emp_info_table;"
-        cursor.execute(query)
-
-
-        #SQLで取得した値を格納(HTMLに送るためのリスト)
-        emp_info = []
-        for (id, name) in cursor:
-            item = {"id" : id, "name" : name}
-            emp_info.append(item)
-
-
-        #値の入った変数やリストをHTMLに渡すための変数に格納ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-        params = {
-            "emp_info" : emp_info,
-            "message" : message
-        }
-
-
-    #もしユーザー名やパスワードなどに誤りがあった場合エラーを出すーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-    except mysql.connector.Error as err:
-        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-            print("ユーザ名かパスワードに問題があります。")
-        elif err.errno == errorcode.ER_BAD_DB_ERROR:
-            print("データベースが存在しません。")
-        else:
-            print(err)
-    else:
-        cnx.close()
-
-    #HTMLへ変数を送るーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+    #HTMLへ変数を送る
     return render_template("all_emp.html", **params)
-
 
 
 #ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
@@ -1737,116 +1736,80 @@ def emp_delete():
 #部署画面
 #ホーム画面
 @app.route("/dept", methods=["GET", "POST"])
-def dept():
-    #mysqlに接続ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-    try :
-        cnx = mysql.connector.connect(host=host, user=username, password=passwd, database=dbname)
-        cursor = cnx.cursor()
+def deptList():
+    #データベース接続
+    cursor, cnx = connectDatabase()
 
+    #部署データを取得
+    dept_info = deptInfoData(cursor)
 
-        #常時実行するSQL
-        query = "SELECT dept_id, dept_name FROM dept_table;"
-        cursor.execute(query)
+    #値の入った変数やリストをHTMLに渡すための変数に格納
+    params = {
+        "dept_info" : dept_info
+    }
 
-
-        #SQLで取得した値を格納(HTMLに送るためのリスト)
-        dept_info = []
-        for (id, name) in cursor:
-            item = {"id" : id, "name" : name}
-            dept_info.append(item)
-
-
-        #値の入った変数やリストをHTMLに渡すための変数に格納ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-        params = {
-            "dept_info" : dept_info
-        }
-
-
-    #もしユーザー名やパスワードなどに誤りがあった場合エラーを出すーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-    except mysql.connector.Error as err:
-        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-            print("ユーザ名かパスワードに問題があります。")
-        elif err.errno == errorcode.ER_BAD_DB_ERROR:
-            print("データベースが存在しません。")
-        else:
-            print(err)
-    else:
-        cnx.close()
-
-
-    #HTMLへ変数を送るーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+    #HTMLへ変数を送る
     return render_template("all_dept.html", **params)
+
+#ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+
+
+#編集する社員の情報を取得
+def getAddDeptInfo():
+    add = "新規作成"
+    dept_name = request.form.get("dept_name", "")
+
+    return add, dept_name
+
+#設定のボタンが押された場合
+def exeAddDeptQuery
+    if "setting" in request.form.keys():
+        result = ""
+        judge = ""
+        #値が入力されておらず空欄のまま
+        if dept_name == "" or not "部" in dept_name:
+            judge = "＊失敗：部署名を入力してください"
+            result = "success"
+
+        #条件通りなので新規追加
+        else:
+            dept_add = f"INSERT INTO dept_table (dept_name, edit_date, update_date) VALUES ('{dept_name}', LOCALTIME(), LOCALTIME())"
+            cursor.execute(dept_add)
+            cnx.commit()
+            judge = "＊成功：データベースの追加が行われました"
+            result = "success"
+
+
+
+
+
+
+
 
 
 #新規追加画面
 @app.route("/dept/add", methods=["POST"])
-def dept_add():
+def addNewDept():
 
-    #追加したい部署名
-    dept_name = ""
-    add = "新規作成"
+    #データベース接続
+    cursor, cnx = connectDatabase()
 
-    #メッセージ
-    result = ""
-    judge = ""
+    #部署データを取得
+    dept_info = deptInfoData(cursor)
 
 
-    #入力された部署名を取得
-    dept_name = request.form.get("dept_name", "")
+    
 
 
-    #mysqlに接続ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-    try:
-        cnx = mysql.connector.connect(host=host, user=username, password=passwd, database=dbname)
-        cursor = cnx.cursor()
 
-        #常時実行するSQL
-        query = "SELECT dept_id, dept_name FROM dept_table;"
-        cursor.execute(query)
-
-        #SQLで取得した値を格納(HTMLに送るためのリスト)
-        dept_info = []
-        for (id, name) in cursor:
-            item = {"id" : id, "name" : name}
-            dept_info.append(item)
-
-
-        #設定のボタンが押された場合ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-        if "setting" in request.form.keys():
-            #値が入力されておらず空欄のまま
-            if dept_name == "" or not "部" in dept_name:
-                judge = "＊失敗：部署名を入力してください"
-                result = "success"
-
-            #条件通りなので新規追加
-            else:
-                dept_add = f"INSERT INTO dept_table (dept_name, edit_date, update_date) VALUES ('{dept_name}', LOCALTIME(), LOCALTIME())"
-                cursor.execute(dept_add)
-                cnx.commit()
-                judge = "＊成功：データベースの追加が行われました"
-                result = "success"
-
-
-        #値の入った変数やリストをHTMLに渡すための変数に格納ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-        cursor.execute(query)
-        params = {
-            "add" : add,
-            "judge" : judge,
-            "result" : result,
-            "dept_info" : dept_info
-        }
-
-
-    #もしユーザー名やパスワードなどに誤りがあった場合エラーを出すーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-    except mysql.connector.Error as err:
-        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-            print("ユーザ名かパスワードに問題があります。")
-        elif err.errno == errorcode.ER_BAD_DB_ERROR:
-            print("データベースが存在しません。")
-        else:
-            print(err)
-    else:
-        cnx.close()
+    #値の入った変数やリストをHTMLに渡すための変数に格納ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+    cursor.execute(query)
+    params = {
+        "add" : add,
+        "judge" : judge,
+        "result" : result,
+        "dept_info" : dept_info
+    }
 
 
     #HTMLへ変数を送るーーーーーーーーーーーーーーーーーーーーーーーーーーーー
@@ -1954,7 +1917,7 @@ def dept_delete():
             dept_delete = f'DELETE FROM dept_table WHERE dept_id = {delete_info}'
             cursor.execute(dept_delete)
             cnx.commit()
-            message = "＊削除：" + dept_name + "をデータベースから削除しました"
+            message = "＊成功：" + dept_name + "をデータベースから削除しました"
 
 
         #常時実行するSQL
