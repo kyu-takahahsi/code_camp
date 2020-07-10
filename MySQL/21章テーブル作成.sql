@@ -16,7 +16,7 @@ CREATE TABLE emp_info_table(
 );
 SELECT info.emp_id as emp_id, emp_name, age, sex, pref, address, dept_id, join_date, retire_date, emp_image FROM emp_info_table as info JOIN emp_img_table as img ON info.emp_id = img.emp_id;
 SELECT info.emp_id as emp_id, dept_name, emp_name, age, sex FROM emp_info_table as info JOIN dept_table ON info.dept_id = dept_table.dept_id;
-SELECT emp_id, emp_name, age, sex, image_id post_code, pref, dept_id, join_date, retire_date FROM emp_info_table;
+SELECT emp_id, emp_name, age, sex, image_id post_code, pref, dept_id, join_date, retire_date. update_date FROM emp_info_table;
 
 --社員画像テーブル：写真ID、画像パス、更新日
 CREATE TABLE emp_img_table(
@@ -27,10 +27,10 @@ CREATE TABLE emp_img_table(
 
 --部署情報テーブル：部署ID、部署名、作成日、更新日
 CREATE TABLE dept_table(
-    dept_id INT AUTO_INCREMENT,
+    --dept_id INT AUTO_INCREMENT,
     dept_name VARCHAR(100),
-    edit_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-    update_date DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    --edit_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    --update_date DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (dept_id)
 );
 

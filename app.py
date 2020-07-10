@@ -1353,7 +1353,7 @@ def exeAddEmpQuery(cursor, cnx,  emp_name, emp_age, emp_sex, emp_postal, emp_pre
 
 
 #値を集約
-def correctAddValue(add, judge, result, dept_info):
+def correctAddEmpValue(add, judge, result, dept_info):
     params = {
         "add" : add,
         "judge" : judge,
@@ -1386,7 +1386,7 @@ def addNewEmp():
     judge, result = exeAddEmpQuery(cursor, cnx,  emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, add_emp_image, emp_image, info_add, img_add)
 
     #HTMLに送る全ての値をparamsに格納
-    params = correctAddValue(add, judge, result, dept_info)
+    params = correctAddEmpValue(add, judge, result, dept_info)
 
     #HTMLへ変数を送る
     return render_template("emp_add.html", **params)
@@ -1472,14 +1472,12 @@ def exeEditQuery(cursor, cnx,  emp_name, emp_age, emp_sex, emp_postal, emp_pref,
             result = "false"
 
         elif emp_image == "":
-            print("elifが実行されたよ")
             cursor.execute(info_update)
             cnx.commit()
             judge = "＊成功：データベースの変更が行われました"
             result = "success"
 
         else:
-            print("elseが実行されたよ")
             cursor.execute(info_update)
             cursor.execute(img_update)
             cnx.commit()
@@ -1578,7 +1576,7 @@ def exeSearchEmpQuery(cursor, query):
 
 
 #値を集約
-def correctSearchValue(search_name, search_emp_id, search_dept, dept_info, emp_info, emp_count):
+def correctSearchEmpValue(search_name, search_emp_id, search_dept, dept_info, emp_info, emp_count):
     params = {
         "search_name" : search_name,
         "search_emp_id" : search_emp_id,
@@ -1609,7 +1607,7 @@ def searchEmp():
     emp_info, emp_count = exeSearchEmpQuery(cursor, query)
 
     #HTMLに送る全ての値をparamsに格納
-    params = correctSearchValue(search_name, search_emp_id, search_dept, dept_info, emp_info, emp_count)
+    params = correctSearchEmpValue(search_name, search_emp_id, search_dept, dept_info, emp_info, emp_count)
 
     #HTMLへ変数を送る
     return render_template("emp_search.html", **params)
@@ -1694,7 +1692,7 @@ def exeDeleteEmpQuery(cursor, cnx, info_delete, img_delete, delete_info, emp_nam
 
 
 #値を集約
-def correctDeleteValue(emp_info, message):
+def correctDeleteEmpValue(emp_info, message):
     params = {
         "emp_info" : emp_info,
         "message" : message
@@ -1715,6 +1713,7 @@ def deleteEmp():
     #部署名セレクターのためのリスト
     dept_info = deptInfoData(cursor)
 
+    #社員情報のリスト
     emp_info = tableDataStorage()
 
     #クエリの取得
@@ -1724,7 +1723,7 @@ def deleteEmp():
     message = exeDeleteEmpQuery(cursor, cnx, info_delete, img_delete, delete_info, emp_name)
 
     #HTMLに送る全ての値をparamsに格納
-    params = correctDeleteValue(emp_info, message)
+    params = correctDeleteEmpValue(emp_info, message)
 
     #HTMLへ変数を送る
     return render_template("all_emp.html", **params)
@@ -1761,49 +1760,36 @@ def getAddDeptInfo():
 
     return add, dept_name
 
-#設定のボタンが押された場合
-def exeAddDeptQuery
+
+#設定のボタンが押された場合に実行するクエリ
+def setAddDeptQuery(dept_name):
+    dept_add = f"INSERT INTO dept_table (dept_name) VALUES ('{dept_name}')"
+
+    return dept_add
+
+
+#設定のボタンが押された場合に用意していたクエリを実行
+def exeAddDeptQuery(cursor, cnx, dept_name, dept_add):
+    result = ""
+    judge = ""
     if "setting" in request.form.keys():
-        result = ""
-        judge = ""
         #値が入力されておらず空欄のまま
         if dept_name == "" or not "部" in dept_name:
             judge = "＊失敗：部署名を入力してください"
-            result = "success"
+            result = "false"
 
         #条件通りなので新規追加
         else:
-            dept_add = f"INSERT INTO dept_table (dept_name, edit_date, update_date) VALUES ('{dept_name}', LOCALTIME(), LOCALTIME())"
             cursor.execute(dept_add)
             cnx.commit()
             judge = "＊成功：データベースの追加が行われました"
             result = "success"
 
+    return judge, result
 
 
-
-
-
-
-
-
-#新規追加画面
-@app.route("/dept/add", methods=["POST"])
-def addNewDept():
-
-    #データベース接続
-    cursor, cnx = connectDatabase()
-
-    #部署データを取得
-    dept_info = deptInfoData(cursor)
-
-
-    
-
-
-
-    #値の入った変数やリストをHTMLに渡すための変数に格納ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-    cursor.execute(query)
+#値を集約
+def correctAddDeptValue(add, judge, result, dept_info):
     params = {
         "add" : add,
         "judge" : judge,
@@ -1811,83 +1797,106 @@ def addNewDept():
         "dept_info" : dept_info
     }
 
+    return params
 
-    #HTMLへ変数を送るーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+
+#新規追加画面
+@app.route("/dept/add", methods=["POST"])
+def addNewDept():
+    #追加するための値取得
+    add, dept_name = getAddDeptInfo()
+
+    #データベース接続
+    cursor, cnx = connectDatabase()
+
+    #部署データを取得
+    dept_info = deptInfoData(cursor)
+
+    #部署を追加するためのクエリ
+    dept_add = setAddDeptQuery(dept_name)
+
+    #条件による判定
+    judge, result = exeAddDeptQuery(cursor, cnx, dept_name, dept_add)
+
+    #値を集約
+    params = correctAddDeptValue(add, judge, result, dept_info)
+
+    #HTMLへ変数を送る
     return render_template("dept_add.html", **params)
 
 
-#編集
-@app.route("/dept/edit", methods=["POST"])
-def dept_edit():
+#ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
 
-    #追加したい部署名
-    dept_name = ""
-    change_info = ""
-
-    #メッセージ
-    result = ""
-    judge = ""
-
-    #入力された部署名を取得
+#編集する部署の情報を取得
+def getChangeDeptInfo():
     dept_name = request.form.get("dept_name", "")
     change_info = request.form.get("change_info", "")
 
-
-    #mysqlに接続ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-    try:
-        cnx = mysql.connector.connect(host=host, user=username, password=passwd, database=dbname)
-        cursor = cnx.cursor()
-
-        #常時実行するSQL
-        query = "SELECT dept_id, dept_name FROM dept_table;"
-        cursor.execute(query)
-
-        #SQLで取得した値を格納(HTMLに送るためのリスト)
-        dept_info = []
-        for (id, name) in cursor:
-            item = {"id" : id, "name" : name}
-            dept_info.append(item)
+    return dept_name, change_info
 
 
-        #設定のボタンが押された場合ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-        if "setting" in request.form.keys() and change_info != "":
-            if dept_name == "":
-                judge = "＊失敗：データベースの変更ができませんでした"
-                result = "fales"
+#更新用のクエリを保管
+def setEditDeptQuery(change_info, dept_name):
+    dept_update = f'UPDATE dept_table SET dept_name = "{dept_name}" WHERE dept_id = {change_info}'
 
-            else:
-                name_update = f'UPDATE dept_table SET dept_name = "{dept_name}", update_date = LOCALTIME() WHERE dept_id = {change_info}'
-                cursor.execute(name_update)
-                cnx.commit()
-                judge = "＊成功：データベースの変更が行われました"
-                result = "success"
+    return dept_update
 
 
-        #値の入った変数やリストをHTMLに渡すための変数に格納ーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-        params = {
-            "judge" : judge,
-            "result" : result,
-            "change_info" : change_info,
-            "dept_name" : dept_name
-        }
+#設定のボタンが押された場合
+def exeEditDeptQuery(cursor, cnx, change_info, dept_name, dept_update):
+    result = ""
+    judge = ""
+    if "setting" in request.form.keys() and change_info != "":
+        if dept_name == "":
+            judge = "＊失敗：データベースの変更ができませんでした"
+            result = "fales"
 
-
-    #もしユーザー名やパスワードなどに誤りがあった場合エラーを出すーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-    except mysql.connector.Error as err:
-        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-            print("ユーザ名かパスワードに問題があります。")
-        elif err.errno == errorcode.ER_BAD_DB_ERROR:
-            print("データベースが存在しません。")
         else:
-            print(err)
-    else:
-        cnx.close()
+            cursor.execute(dept_update)
+            cnx.commit()
+            judge = "＊成功：データベースの変更が行われました"
+            result = "success"
+
+    return judge, result
 
 
-    #HTMLへ変数を送るーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+#値を集約
+def correctEditDeptValue(judge, result, change_info, dept_name):
+    params = {
+        "judge" : judge,
+        "result" : result,
+        "change_info" : change_info,
+        "dept_name" : dept_name
+    }
+
+    return params
+
+
+#編集のURL(部品を集めて実行する)
+@app.route("/dept/edit", methods=["POST"])
+def editDept():
+    #追加するための値取得
+    change_info, dept_name = getChangeDeptInfo()
+
+    #データベース接続
+    cursor, cnx = connectDatabase()
+
+    #部署データを取得
+    dept_info = deptInfoData(cursor)
+
+    #部署を更新するためのクエリ
+    dept_update = setAddDeptQuery(dept_name)
+
+    #条件による判定
+    judge, result = exeEditDeptQuery(cursor, cnx, change_info, dept_name, dept_update)
+
+    #値を集約
+    params = correctEditDeptValue(judge, result, change_info, dept_name)
+
+    #HTMLへ変数を送る
     return render_template("dept_add.html", **params)
 
-
+#ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
 
 #削除
 @app.route("/dept/delete", methods=["POST"])
