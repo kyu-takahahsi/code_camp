@@ -1614,13 +1614,11 @@ def searchEmp():
 #ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
 #csv出力
 def downloads(cursor):
-    csv = ""
-    item = "社員ID, 名前, 年齢, 性別, 画像ID, 郵便番号, 都道府県, 住所, 部署ID, 入社日, 退社日, 画像パス\n"
+    csv = "社員ID, 名前, 年齢, 性別, 画像ID, 郵便番号, 都道府県, 住所, 部署ID, 入社日, 退社日, 画像パス\n"
     query = "SELECT info.emp_id as emp_id, emp_name, age, sex, info.image_id, post_code, pref, address, dept_id, join_date, retire_date, emp_image FROM emp_info_table as info JOIN emp_img_table as img ON info.image_id = img.image_id;"
     cursor.execute(query)
     for (id, name, age, sex, image_id, post, pref, address, dept, join, retire, image) in cursor:
-        item += f"{id}, {name}, {age}, {sex}, {image_id}, {post}, {pref}, {address}, {dept}, {join}, {retire}, {image}\n"
-    csv = item
+        csv += f"{id}, {name}, {age}, {sex}, {image_id}, {post}, {pref}, {address}, {dept}, {join}, {retire}, {image}\n"
 
     return csv
 
