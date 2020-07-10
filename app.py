@@ -1615,7 +1615,7 @@ def searchEmp():
 
 def downloads(cursor):
     csv = ""
-    item = "社員ID, 名前, 年齢, 性別, 画像ID, 郵便番号, 都道府県, 部署ID, 入社日, 退社日, 画像パス\n"
+    item = "社員ID, 名前, 年齢, 性別, 画像ID, 郵便番号, 都道府県, 住所, 部署ID, 入社日, 退社日, 画像パス\n"
     query = "SELECT info.emp_id as emp_id, emp_name, age, sex, info.image_id, post_code, pref, address, dept_id, join_date, retire_date, emp_image FROM emp_info_table as info JOIN emp_img_table as img ON info.image_id = img.image_id;"
     cursor.execute(query)
     for (id, name, age, sex, image_id, post, pref, address, dept, join, retire, image) in cursor:
@@ -1635,35 +1635,6 @@ def outputCsv():
     return response
 
 
-"""
-#CSVファイル出力
-@app.route("/emp/output", methods=["GET", "POST"])
-def outputInfo():
-
-    #出力成功の文字
-    message = ""
-    cursor, cnx = connectDatabase()
-
-    #CSVファイル出力のために実行するSQL
-    if "info_output" in request.form.keys():
-        message = "成功：社員データをCSVファイルに出力しました"
-
-    #リストに社員情報格納
-    emp_info = tableDataStorage()
-
-    csv = downloads(cursor)
-
-    response = outputCsv(csv)
-
-    #値の入った変数やリストをHTMLに渡すための変数に格納
-    params = {
-    "emp_info" : emp_info,
-    "message" : message
-    }
-
-    #HTMLへ変数を送る
-    return render_template("all_emp.html", **params)
-"""
 #ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
 
 #削除する社員の情報取得
