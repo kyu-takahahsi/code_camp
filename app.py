@@ -1264,6 +1264,7 @@ def imageSetVariable(emp_image):
 
     return add_emp_image, emp_image
 
+
 #値を集約
 def correctAddEmpValue(add, judge, result, dept_info):
     params = {

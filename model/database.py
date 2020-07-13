@@ -3,7 +3,7 @@ import re
 import mysql.connector
 from mysql.connector import errorcode
 from model.const import DB
-from model.item import EMP, DEPT, EMP_ALL, EMP_COUNT
+from model.item import EMP, DEPT
 
 
 #データベースに接続
@@ -106,7 +106,7 @@ def getEditEmpinfo(cursor, change_info):
 
     #社員ID、名前、年齢、性別、都道府県、住所、部署ID、入社日、退社日、画像
     for (id, name, age, sex, image_id, post, pref, address, dept, join, retire, image) in cursor:
-        item = EMP_ALL(id, name, age, sex, image_id, post, pref, address, dept, join, retire, image)
+        item = EMP(id, name, age, sex, image_id, post, pref, address, dept, join, retire, image)
         if str(item["id"]) == change_info:
             edit_info.append(item)
             dept_select = item["dept"]
@@ -194,7 +194,7 @@ def exeSearchEmpQuery(cursor, query):
     #SQLで取得した値を格納(HTMLに送るためのリスト)
     emp_info = []
     for (id, name, dept) in cursor:
-        item = EMP_COUNT(id, name, dept)
+        item = EMP(id, name, dept)
         emp_info.append(item)
         emp_count += 1
 
