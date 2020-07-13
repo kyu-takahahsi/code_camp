@@ -58,7 +58,6 @@ def setAddEmpQuery(emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address
     return info_add, img_add
 
 
-
 #設定のボタンが押された場合
 def exeAddEmpQuery(cursor, cnx,  emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, add_emp_image, emp_image, info_add, img_add):
     judge = ""
@@ -90,7 +89,6 @@ def exeAddEmpQuery(cursor, cnx,  emp_name, emp_age, emp_sex, emp_postal, emp_pre
             result = "success"
 
     return judge, result
-
 
 
 #編集する社員の情報を取得し、変数やリストへ格納
@@ -127,7 +125,6 @@ def setEditEmpQuery(change_info, emp_name, emp_age, emp_sex, emp_postal, emp_pre
         img_update = f'UPDATE emp_img_table SET emp_image = "{add_emp_image}" WHERE image_id = "{image_id}"'
 
     return info_update, img_update
-
 
 
 #設定のボタンが押された場合
@@ -216,7 +213,6 @@ def downloads(cursor):
     return csv
 
 
-
 #従業員データを取得し、配列に代入する
 def tableData():
     cursor, cnx = connectDatabase()
@@ -257,7 +253,6 @@ def exeDeleteEmpQuery(cursor, cnx, info_delete, img_delete, delete_info, emp_nam
     return message, emp_info
 
 
-
 #設定のボタンが押された場合に実行するクエリ
 def setAddDeptQuery(dept_name):
     dept_add = f"INSERT INTO dept_table (dept_name) VALUES ('{dept_name}')"
@@ -292,7 +287,6 @@ def setEditDeptQuery(change_info, dept_name):
     return dept_update
 
 
-
 #情報削除用のクエリ
 def setDeleteEmpQuery(delete_info):
     info_delete = f'DELETE FROM emp_info_table WHERE image_id = "{delete_info}"'
@@ -316,7 +310,6 @@ def exeEditDeptQuery(cursor, cnx, change_info, dept_name, dept_update):
             result = "success"
 
     return judge, result
-
 
 
 #情報削除用のクエリ
