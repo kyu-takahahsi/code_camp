@@ -1,10 +1,6 @@
-"""
 class Item(object):
-    def __init__(self, id="", name="", price=""):
+    def __init__(self, id="", name="", dept="", image_id=""):
         self.id = id
         self.name = name
-        self.price = price
-
-    def tax_price(self):
-        return int(self.price*1.08)
-"""
+        self.dept = dept
+        self.image_id = image_id
