@@ -1243,7 +1243,7 @@ def tableDataStorage():
 
 
 #ホーム画面
-@app.route("/emp", methods=['GET', 'POST'])
+@app.route("/", methods=['GET', 'POST'])
 def employeeList():
     emp_info = tableDataStorage()
 
@@ -1306,10 +1306,12 @@ def deptInfoData(cursor):
 #新規追加クエリを保管
 def setAddEmpQuery(emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, add_emp_image):
     if retire_date == "":
-        info_add = f'INSERT INTO emp_info_table (emp_name, age, sex, image_id, post_code, pref, address, dept_id, join_date, retire_date) VALUES ("{emp_name}", {emp_age}, "{emp_sex}", "{image_id}", "{emp_postal}", "{emp_pref}", "{emp_address}", {emp_dept}, "{join_date}", "在籍")'
+        info_add = f'INSERT INTO emp_info_table (emp_name, age, sex, image_id, post_code, pref, address, dept_id, join_date, retire_date) \
+                    VALUES ("{emp_name}", {emp_age}, "{emp_sex}", "{image_id}", "{emp_postal}", "{emp_pref}", "{emp_address}", {emp_dept}, "{join_date}", "在籍")'
         img_add = f'INSERT INTO emp_img_table (image_id, emp_image) VALUES ("{image_id}", "{add_emp_image}")'
     else:
-        info_add = f'INSERT INTO emp_info_table (emp_name, age, sex, image_id, post_code, pref, address, dept_id, join_date, retire_date) VALUES ("{emp_name}", {emp_age}, "{emp_sex}", "{image_id}", "{emp_postal}", "{emp_pref}", "{emp_address}", {emp_dept}, "{join_date}", "{retire_date}")'
+        info_add = f'INSERT INTO emp_info_table (emp_name, age, sex, image_id, post_code, pref, address, dept_id, join_date, retire_date) \
+                    VALUES ("{emp_name}", {emp_age}, "{emp_sex}", "{image_id}", "{emp_postal}", "{emp_pref}", "{emp_address}", {emp_dept}, "{join_date}", "{retire_date}")'
         img_add = f'INSERT INTO emp_img_table (image_id, emp_image) VALUES ("{image_id}", "{add_emp_image}")'
 
     return info_add, img_add
@@ -1412,7 +1414,8 @@ def getChangeEmpInfo():
 #編集する社員の情報を取得し、変数やリストへ格納
 def getEditEmpinfo(cursor, change_info):
     #常時実行するSQL
-    query = "SELECT info.emp_id as emp_id, emp_name, age, sex, info.image_id, post_code, pref, address, dept_id, join_date, retire_date, emp_image FROM emp_info_table as info JOIN emp_img_table as img ON info.image_id = img.image_id;"
+    query = "SELECT info.emp_id as emp_id, emp_name, age, sex, info.image_id, post_code, pref, address, dept_id, join_date, retire_date, emp_image \
+            FROM emp_info_table as info JOIN emp_img_table as img ON info.image_id = img.image_id;"
     cursor.execute(query)
 
     #SQLで取得した値を格納(HTMLに送るためのリスト)
@@ -1467,13 +1470,13 @@ def exeEditQuery(cursor, cnx,  emp_name, emp_age, emp_sex, emp_postal, emp_pref,
         elif not re.search(r"[ ]", emp_name):
             judge = "＊失敗：名前と苗字の間に半角で空欄を入力してください"
             result = "false"
-        #条件通りなので新規追加(画像の変更なし)
+        #条件通りなので情報変更(画像の変更なし)
         elif emp_image == "":
             cursor.execute(info_update)
             cnx.commit()
             judge = "＊成功：データベースの変更が行われました"
             result = "success"
-        #条件通りなので新規追加(画像の変更あり)
+        #条件通りなので情報変更(画像の変更あり)
         else:
             cursor.execute(info_update)
             cursor.execute(img_update)
@@ -1542,7 +1545,9 @@ def getSearchEmpInfo():
 
 #社員情報のSQL
 def setSearchQuery(search_dept, search_emp_id, search_name):
-    query = f'SELECT emp_id, emp_name, dept_name FROM emp_info_table as eit JOIN dept_table as dt ON eit.dept_id = dt.dept_id WHERE emp_id IS NOT NULL '
+    query = f'SELECT emp_id, emp_name, dept_name \
+            FROM emp_info_table as eit JOIN dept_table as dt ON eit.dept_id = dt.dept_id \
+            WHERE emp_id IS NOT NULL '
     #もし検索条件があれば条件を加えていく
     if search_dept != "" or search_emp_id != "" or search_name != "":
         if search_dept != "":
@@ -1614,11 +1619,13 @@ def searchEmp():
 #ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
 #csv出力
 def downloads(cursor):
-    csv = "社員ID, 名前, 年齢, 性別, 画像ID, 郵便番号, 都道府県, 住所, 部署ID, 入社日, 退社日, 画像パス\n"
-    query = "SELECT info.emp_id as emp_id, emp_name, age, sex, info.image_id, post_code, pref, address, dept_id, join_date, retire_date, emp_image FROM emp_info_table as info JOIN emp_img_table as img ON info.image_id = img.image_id;"
+    csv = "社員ID, 名前, 年齢, 性別, 郵便番号, 都道府県, 住所, 部署ID, 部署名, 入社日, 退社日, 画像ID, 画像パス\n"
+    query = "SELECT info.emp_id as emp_id, emp_name, age, sex, post_code, pref, address, dt.dept_id, dt.dept_name, join_date, retire_date, info.image_id, emp_image \
+            FROM emp_info_table as info JOIN emp_img_table as img ON info.image_id = img.image_id \
+            JOIN dept_table as dt ON info.dept_id = dt.dept_id;"
     cursor.execute(query)
-    for (id, name, age, sex, image_id, post, pref, address, dept, join, retire, image) in cursor:
-        csv += f"{id}, {name}, {age}, {sex}, {image_id}, {post}, {pref}, {address}, {dept}, {join}, {retire}, {image}\n"
+    for (id, name, age, sex, post, pref, address, dept_id, dept_name, join, retire, image_id, image) in cursor:
+        csv += f"{id}, {name}, {age}, {sex}, {post}, {pref}, {address}, {dept_id}, {dept_name}, {join}, {retire}, {image_id}, {image}\n"
 
     return csv
 
@@ -1651,18 +1658,44 @@ def setDeleteEmpQuery(delete_info):
     return info_delete, img_delete
 
 
+#従業員データを取得し、配列に代入する
+def tableData():
+    cursor, cnx = connectDatabase()
+
+    query = "SELECT emp_id, emp_name, dept_name, image_id FROM emp_info_table as eit JOIN dept_table as dt ON eit.dept_id = dt.dept_id ORDER BY emp_id;"
+    cursor.execute(query)
+
+    emp_info = []
+    for (id, name, dept, image_id) in cursor:
+        item = {"id" : id, "name" : name, "dept" : dept, "image_id": image_id}
+        emp_info.append(item)
+
+    return emp_info
+
+
+def comformDeleteEmpInfo(emp_info, delete_info):
+    exist_info = ""
+    for i in emp_info:
+        if i["image_id"] == delete_info:
+            exist_info = "in"
+    return exist_info
+
+
 #削除のクエリ
-def exeDeleteEmpQuery(cursor, cnx, info_delete, img_delete, delete_info, emp_name):
+def exeDeleteEmpQuery(cursor, cnx, info_delete, img_delete, delete_info, emp_name, exist_info):
     message = ""
 
-    if "delete_info" in request.form.keys() and delete_info != "":
+    if "delete_info" in request.form.keys() and exist_info != "":
         #削除ボタンが押された
         cursor.execute(info_delete)
         cursor.execute(img_delete)
         cnx.commit()
         message = "＊成功：" + emp_name + "をデータベースから削除しました"
+    else:
+        message = "＊失敗：" + emp_name + "という名前はデータベース上に情報がありません"
+    emp_info = tableDataStorage()
 
-    return message
+    return message, emp_info
 
 
 #値を集約
@@ -1684,17 +1717,20 @@ def deleteEmp():
     #データベースに接続
     cursor, cnx = connectDatabase()
 
-    #部署名セレクターのためのリスト
+    #部署名のためのリスト
     dept_info = deptInfoData(cursor)
 
     #クエリの取得
     info_delete, img_delete = setDeleteEmpQuery(delete_info)
 
-    #クエリ実行するかの判定、結果
-    message = exeDeleteEmpQuery(cursor, cnx, info_delete, img_delete, delete_info, emp_name)
-
     #社員情報のリスト
     emp_info = tableDataStorage()
+
+    #情報が存在するかの確認
+    exist_info = comformDeleteEmpInfo(emp_info, delete_info)
+
+    #クエリ実行するかの判定、結果
+    message, emp_info = exeDeleteEmpQuery(cursor, cnx, info_delete, img_delete, delete_info, emp_name, exist_info)
 
     #HTMLに送る全ての値をparamsに格納
     params = correctDeleteEmpValue(emp_info, message)
@@ -1840,7 +1876,6 @@ def correctEditDeptValue(judge, result, change_info, dept_name):
         "change_info" : change_info,
         "dept_name" : dept_name
     }
-    print(params)
 
     return params
 
@@ -1886,15 +1921,27 @@ def setDeleteDeptQuery(delete_info):
     return dept_delete
 
 
+#情報が存在するかの確認
+def comformDeleteInfo(dept_info, delete_info):
+    exist_info = ""
+    for i in dept_info:
+        if i["id"] == int(delete_info):
+            exist_info = "in"
+    return exist_info
+
+
 #削除のクエリ
-def exeDeleteDeptQuery(cursor, cnx, delete_info, dept_name, dept_delete):
+def exeDeleteDeptQuery(cursor, cnx, delete_info, dept_name, dept_delete, exist_info, dept_info):
     message = ""
-    if "delete_info" in request.form.keys() and delete_info != "":
+    if "delete_info" in request.form.keys() and exist_info != "":
         cursor.execute(dept_delete)
         cnx.commit()
         message = "＊成功：" + dept_name + "をデータベースから削除しました"
+    else:
+        message = "＊失敗：" + dept_name + "という情報はデータベース上に情報がありません"
+    dept_info = deptInfoData(cursor)
 
-    return message
+    return message, dept_info
 
 
 #値を集約
@@ -1922,8 +1969,11 @@ def deleteDept():
     #部署を更新するためのクエリ
     dept_delete = setDeleteDeptQuery(delete_info)
 
+    #情報が存在するかの確認
+    exist_info = comformDeleteInfo(dept_info, delete_info)
+
     #条件による判定
-    message = exeDeleteDeptQuery(cursor, cnx, delete_info, dept_name, dept_delete)
+    message, dept_info = exeDeleteDeptQuery(cursor, cnx, delete_info, dept_name, dept_delete, exist_info, dept_info)
 
     #値を集約
     params = correctDeleteDeptValue(dept_info, message)
