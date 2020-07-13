@@ -1207,7 +1207,6 @@ def sample_session():
     return response
 """
 #21章ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-
 #画像のためのパスや定義
 UPLOAD_FOLDER = './static/'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
@@ -1215,7 +1214,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 #MVC
 import model.database as db
-from model.item import Item
+from model.item import EMP, DEPT, EMP_ALL, EMP_COUNT
 
 #ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
 #ホーム画面

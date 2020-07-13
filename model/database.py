@@ -3,7 +3,8 @@ import re
 import mysql.connector
 from mysql.connector import errorcode
 from model.const import DB
-from model.item import Item
+from model.item import EMP, DEPT, EMP_ALL, EMP_COUNT
+
 
 #データベースに接続
 def connectDatabase():
@@ -25,7 +26,7 @@ def tableDataStorage():
 
     emp_info = []
     for (id, name, dept, image_id) in cursor:
-        item = Item(id, name, dept, image_id)
+        item = EMP(id, name, dept, image_id)
         emp_info.append(item)
 
     return emp_info
@@ -38,7 +39,7 @@ def deptInfoData(cursor):
 
     dept_info = []
     for (id, name) in cursor:
-        item = {"id" : id, "name" : name}
+        item = DEPT(id, name)
         dept_info.append(item)
 
     return dept_info
@@ -105,7 +106,7 @@ def getEditEmpinfo(cursor, change_info):
 
     #社員ID、名前、年齢、性別、都道府県、住所、部署ID、入社日、退社日、画像
     for (id, name, age, sex, image_id, post, pref, address, dept, join, retire, image) in cursor:
-        item = {"id" : id, "name" : name, "age" : age, "sex" : sex, "image_id" : image_id,"post" : post, "pref" : pref, "address" : address, "dept" : dept, "join" : join, "retire" : retire , "image" : image}
+        item = EMP_ALL(id, name, age, sex, image_id, post, pref, address, dept, join, retire, image)
         if str(item["id"]) == change_info:
             edit_info.append(item)
             dept_select = item["dept"]
@@ -193,7 +194,7 @@ def exeSearchEmpQuery(cursor, query):
     #SQLで取得した値を格納(HTMLに送るためのリスト)
     emp_info = []
     for (id, name, dept) in cursor:
-        item = {"id" : id, "name" : name, "dept" : dept}
+        item = EMP_COUNT(id, name, dept)
         emp_info.append(item)
         emp_count += 1
 
@@ -214,6 +215,7 @@ def downloads(cursor):
 
 
 #従業員データを取得し、配列に代入する
+"""
 def tableData():
     cursor, cnx = connectDatabase()
 
@@ -226,7 +228,7 @@ def tableData():
         emp_info.append(item)
 
     return emp_info
-
+"""
 
 def comformDeleteEmpInfo(emp_info, delete_info):
     exist_info = ""
