@@ -1214,20 +1214,17 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 #MVC
 import model.database as db
-from model.item import EMP, DEPT
-
+#from model.item import EMP, DEPT
 #ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+
 #ホーム画面
 @app.route("/", methods=['GET', 'POST'])
 def employeeList():
     emp_info = db.tableDataStorage()
-
     params = {
     "emp_info" : emp_info
     }
-
     return render_template("all_emp.html", **params)
-
 
 #ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
 #HTMLから情報を受け取る
@@ -1244,16 +1241,15 @@ def getEmpInfo():
     retire_date = request.form.get("retire_date", "")
     emp_image = request.files.get("emp_image", "")
     image_id = ""
+    #画像ID作成
     for i in range(10):
         image_id += (random.choice(string.ascii_letters))
-
     return add, emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, emp_image
 
 
 #画像の有無
 def imageSetVariable(emp_image):
     add_emp_image = ""
-
     if emp_image != "":
         filename = secure_filename(emp_image.filename)
         if filename != "":
@@ -1261,7 +1257,6 @@ def imageSetVariable(emp_image):
             add_emp_image = "../static/" + filename
         else:
             emp_image = ""
-
     return add_emp_image, emp_image
 
 
@@ -1273,7 +1268,6 @@ def correctAddEmpValue(add, judge, result, dept_info):
         "result" : result,
         "dept_info" : dept_info
     }
-
     return params
 
 
@@ -1282,25 +1276,18 @@ def correctAddEmpValue(add, judge, result, dept_info):
 def addNewEmp():
     #値の取得
     add, emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, emp_image = getEmpInfo()
-
     #画像にパスを通す
     add_emp_image, emp_image = imageSetVariable(emp_image)
-
     #データベースに接続
     cursor, cnx = db.connectDatabase()
-
     #部署名セレクターのためのリスト
     dept_info = db.deptInfoData(cursor)
-
     #クエリの取得
     info_add, img_add = db.setAddEmpQuery(emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, add_emp_image)
-
     #クエリ実行するかの判定、結果
     judge, result = db.exeAddEmpQuery(cursor, cnx,  emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, add_emp_image, emp_image, info_add, img_add)
-
     #HTMLに送る全ての値をparamsに格納
     params = correctAddEmpValue(add, judge, result, dept_info)
-
     #HTMLへ変数を送る
     return render_template("emp_add.html", **params)
 
@@ -1318,11 +1305,10 @@ def getChangeEmpInfo():
     emp_pref = request.form.get("emp_pref", "")
     emp_address = request.form.get("emp_address", "")
     emp_dept = request.form.get("emp_dept", "")
-    join_date = request.form.get("retire_date", "")
+    join_date = request.form.get("join_date", "")
     retire_date = request.form.get("retire_date", "")
     emp_image = request.files.get("emp_image", "")
     image_id = request.form.get("image_id", "")
-
     return change_info, emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, emp_image
 
 
@@ -1336,7 +1322,6 @@ def correctEditValue(pref_select, dept_select, dept_info, edit_info, judge, resu
         "result" : result,
         "judge" : judge
     }
-
     return params
 
 
@@ -1345,31 +1330,23 @@ def correctEditValue(pref_select, dept_select, dept_info, edit_info, judge, resu
 def editEmp():
     #値の取得
     change_info, emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, emp_image = getChangeEmpInfo()
-
     #画像にパスを通す
     add_emp_image, emp_image = imageSetVariable(emp_image)
-
     #データベースに接続
     cursor, cnx = db.connectDatabase()
-
     #部署名セレクターのためのリスト
     dept_info = db.deptInfoData(cursor)
-
     #編集を押した従業員のIDと都道府県を格納
     edit_info, dept_select, pref_select = db.getEditEmpinfo(cursor, change_info)
-
     #クエリの取得
     info_update, img_update = db.setEditEmpQuery(change_info, emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, add_emp_image)
-
+    print(info_update)
     #クエリ実行するかの判定、結果
     judge, result = db.exeEditQuery(cursor, cnx,  emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, add_emp_image, emp_image, info_update, img_update)
-
     #HTMLに送る全ての値をparamsに格納
     params = correctEditValue(pref_select, dept_select, dept_info, edit_info, judge, result)
-
     #HTMLへ変数を送る
     return render_template("emp_add.html", **params)
-
 
 #ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
 
@@ -1378,7 +1355,6 @@ def getSearchEmpInfo():
     search_dept = request.form.get("search_dept", "")
     search_emp_id = request.form.get("search_emp_id", "")
     search_name = request.form.get("search_name", "")
-
     return search_dept, search_emp_id, search_name
 
 
@@ -1392,7 +1368,6 @@ def correctSearchEmpValue(search_name, search_emp_id, search_dept, dept_info, em
         "dept_info" : dept_info,
         "emp_info" : emp_info
     }
-
     return params
 
 
@@ -1401,27 +1376,21 @@ def correctSearchEmpValue(search_name, search_emp_id, search_dept, dept_info, em
 def searchEmp():
     #検索条件の値の取得
     search_dept, search_emp_id, search_name = getSearchEmpInfo()
-
     #データベースに接続
     cursor, cnx = db.connectDatabase()
-
     #部署名セレクターのためのリスト
     dept_info = db.deptInfoData(cursor)
-
     #クエリの取得
     query = db.setSearchQuery(search_dept, search_emp_id, search_name)
-
     #クエリ実行するかの判定、結果
     emp_info, emp_count = db.exeSearchEmpQuery(cursor, query)
-
     #HTMLに送る全ての値をparamsに格納
     params = correctSearchEmpValue(search_name, search_emp_id, search_dept, dept_info, emp_info, emp_count)
-
     #HTMLへ変数を送る
     return render_template("emp_search.html", **params)
 
-
 #ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+
 #csv出力
 @app.route('/emp/output', methods=["GET", "POST"])
 def outputCsv():
@@ -1429,9 +1398,7 @@ def outputCsv():
     csv = db.downloads(cursor)
     response = make_response(csv)
     response.headers["Content-Disposition"] = f"attachment; filename=employee_information.csv"
-
     return response
-
 
 #ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
 
@@ -1439,7 +1406,6 @@ def outputCsv():
 def getDeleteEmpInfo():
     delete_info = request.form.get("delete_info", "")
     emp_name = request.form.get("emp_name", "")
-
     return delete_info, emp_name
 
 
@@ -1449,7 +1415,6 @@ def correctDeleteEmpValue(emp_info, message):
         "emp_info" : emp_info,
         "message" : message
     }
-
     return params
 
 
@@ -1458,34 +1423,24 @@ def correctDeleteEmpValue(emp_info, message):
 def deleteEmp():
     #検索条件の値の取得
     delete_info, emp_name = getDeleteEmpInfo()
-
     #データベースに接続
     cursor, cnx = db.connectDatabase()
-
     #部署名のためのリスト
     dept_info = db.deptInfoData(cursor)
-
     #クエリの取得
     info_delete, img_delete = db.setDeleteEmpQuery(delete_info)
-
     #社員情報のリスト
     emp_info = db.tableDataStorage()
-
     #情報が存在するかの確認
     exist_info = db.comformDeleteEmpInfo(emp_info, delete_info)
-
     #クエリ実行するかの判定、結果
     message, emp_info = db.exeDeleteEmpQuery(cursor, cnx, info_delete, img_delete, delete_info, emp_name, exist_info)
-
     #HTMLに送る全ての値をparamsに格納
     params = correctDeleteEmpValue(emp_info, message)
-
     #HTMLへ変数を送る
     return render_template("all_emp.html", **params)
 
-
 #ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-
 
 #部署画面
 #ホーム画面
@@ -1493,26 +1448,21 @@ def deleteEmp():
 def deptList():
     #データベース接続
     cursor, cnx = db.connectDatabase()
-
     #部署データを取得
     dept_info = db.deptInfoData(cursor)
-
     #値の入った変数やリストをHTMLに渡すための変数に格納
     params = {
         "dept_info" : dept_info
     }
-
     #HTMLへ変数を送る
     return render_template("all_dept.html", **params)
 
 #ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
 
-
 #編集する社員の情報を取得
 def getAddDeptInfo():
     add = "新規作成"
     dept_name = request.form.get("dept_name", "")
-
     return add, dept_name
 
 
@@ -1524,7 +1474,6 @@ def correctAddDeptValue(add, judge, result, dept_info):
         "result" : result,
         "dept_info" : dept_info
     }
-
     return params
 
 
@@ -1533,25 +1482,18 @@ def correctAddDeptValue(add, judge, result, dept_info):
 def addNewDept():
     #追加するための値取得
     add, dept_name = getAddDeptInfo()
-
     #データベース接続
     cursor, cnx = db.connectDatabase()
-
     #部署データを取得
     dept_info = db.deptInfoData(cursor)
-
     #部署を追加するためのクエリ
     dept_add = db.setAddDeptQuery(dept_name)
-
     #条件による判定
     judge, result = db.exeAddDeptQuery(cursor, cnx, dept_name, dept_add)
-
     #値を集約
     params = correctAddDeptValue(add, judge, result, dept_info)
-
     #HTMLへ変数を送る
     return render_template("dept_add.html", **params)
-
 
 #ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
 
@@ -1559,7 +1501,6 @@ def addNewDept():
 def getChangeDeptInfo():
     dept_name = request.form.get("dept_name", "")
     change_info = request.form.get("change_info", "")
-
     return dept_name, change_info
 
 
@@ -1571,31 +1512,24 @@ def correctEditDeptValue(judge, result, change_info, dept_name):
         "change_info" : change_info,
         "dept_name" : dept_name
     }
-
     return params
 
 
 #編集のURL(部品を集めて実行する)
 @app.route("/dept/edit", methods=["POST"])
 def editDept():
-    #追加するための値取得
+    #編集するための値取得
     dept_name, change_info = getChangeDeptInfo()
-
     #データベース接続
     cursor, cnx = db.connectDatabase()
-
     #部署データを取得
     dept_info = db.deptInfoData(cursor)
-
     #部署を更新するためのクエリ
     dept_update = db.setEditDeptQuery(change_info, dept_name)
-
     #条件による判定
     judge, result = db.exeEditDeptQuery(cursor, cnx, change_info, dept_name, dept_update)
-
     #値を集約
     params = correctEditDeptValue(judge, result, change_info, dept_name)
-
     #HTMLへ変数を送る
     return render_template("dept_add.html", **params)
 
@@ -1605,7 +1539,6 @@ def editDept():
 def getDeleteDeptInfo():
     delete_info = request.form.get("delete_info", "")
     dept_name = request.form.get("dept_name", "")
-
     return delete_info, dept_name
 
 
@@ -1615,33 +1548,25 @@ def correctDeleteDeptValue(dept_info, message):
         "dept_info" : dept_info,
         "message" : message
     }
-
     return params
 
 
 #削除のURL(部品を集めて実行する)
 @app.route("/dept/delete", methods=["POST"])
 def deleteDept():
-    #追加するための値取得
+    #削除するための値取得
     delete_info, dept_name = getDeleteDeptInfo()
-
     #データベース接続
     cursor, cnx = db.connectDatabase()
-
     #部署データを取得
     dept_info = db.deptInfoData(cursor)
-
     #部署を更新するためのクエリ
     dept_delete = db.setDeleteDeptQuery(delete_info)
-
     #情報が存在するかの確認
     exist_info = db.comformDeleteInfo(dept_info, delete_info)
-
     #条件による判定
     message, dept_info = db.exeDeleteDeptQuery(cursor, cnx, delete_info, dept_name, dept_delete, exist_info, dept_info)
-
     #値を集約
     params = correctDeleteDeptValue(dept_info, message)
-
     #HTMLへ変数を送る
     return render_template("all_dept.html", **params)
