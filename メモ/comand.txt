@@ -31,3 +31,9 @@ python3 -m venv venv
 ・.gitignoreで不要なファイルを記述、push
 ・git rm -r --cached .(git上のファイルを削除)
 ・git add.　→　git commit -m ""　→　git push(いつも通りの作業)
+
+コメント色分け
+・!：赤
+・*：黄緑
+・?：青
+・TODO：オレンジ
