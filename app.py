@@ -1220,13 +1220,12 @@ import model.database as db
 #ホーム画面
 @app.route("/", methods=['GET', 'POST'])
 def employeeList():
-    emp_info = db.tableDataStorage()
+    emp_info = db.empInfoData()
     return render_template("all_emp.html", emp_info=emp_info)
 
 #ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
 #HTMLから情報を受け取る
 def getEmpInfo():
-    add = "新規追加"
     emp_name = request.form.get("emp_name", "")
     emp_age = request.form.get("emp_age", "")
     emp_sex = request.form.get("emp_sex", "")
@@ -1237,11 +1236,7 @@ def getEmpInfo():
     join_date = request.form.get("join_date", "")
     retire_date = request.form.get("retire_date", "")
     emp_image = request.files.get("emp_image", "")
-    image_id = ""
-    #画像ID作成
-    for _ in range(10):
-        image_id += (random.choice(string.ascii_letters))
-    return add, emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, emp_image
+    return emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, emp_image
 
 
 #画像の有無
@@ -1260,34 +1255,20 @@ def imageSetVariable(emp_image):
 #新規追加URL(部品を集めて実行する)
 @app.route("/emp/add", methods=["POST"])
 def addNewEmp():
-    add, emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, emp_image = getEmpInfo()
+    add = "新規追加"
+    image_id = ""
+    #画像ID作成
+    for _ in range(10):
+        image_id += (random.choice(string.ascii_letters))
+    emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, emp_image = getEmpInfo()
     add_emp_image, emp_image = imageSetVariable(emp_image)
-    cursor, cnx = db.connectDatabase()
+    cursor, cnx = db.connect()
     dept_info = db.deptInfoData(cursor)
-    info_add, img_add = db.setAddEmpQuery(emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, add_emp_image)
+    info_add, img_add = db.createAddEmpQuery(emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, add_emp_image)
     judge, result = db.exeAddEmpQuery(cursor, cnx,  emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, add_emp_image, emp_image, info_add, img_add)
     return render_template("emp_add.html", add=add, judge=judge, result=result, dept_info=dept_info)
 
 #ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
-
-#編集する社員の情報を取得
-def getChangeEmpInfo():
-    #編集が押された社員のidを取得
-    change_info = request.form.get("change_info", "")
-    #編集が押された社員の基本情報を取得
-    emp_name = request.form.get("emp_name", "")
-    emp_age = request.form.get("emp_age", "")
-    emp_sex = request.form.get("emp_sex", "")
-    emp_postal = request.form.get("emp_postal", "")
-    emp_pref = request.form.get("emp_pref", "")
-    emp_address = request.form.get("emp_address", "")
-    emp_dept = request.form.get("emp_dept", "")
-    join_date = request.form.get("join_date", "")
-    retire_date = request.form.get("retire_date", "")
-    emp_image = request.files.get("emp_image", "")
-    image_id = request.form.get("image_id", "")
-    return change_info, emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, emp_image
-
 
 #値を集約
 def correctEditValue(pref_select, dept_select, dept_info, edit_info, judge, result):
@@ -1305,12 +1286,14 @@ def correctEditValue(pref_select, dept_select, dept_info, edit_info, judge, resu
 #編集のURL(部品を集めて実行する)
 @app.route("/emp/edit", methods=["POST"])
 def editEmp():
-    change_info, emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, emp_image = getChangeEmpInfo()
+    image_id = request.form.get("image_id", "")
+    change_info = request.form.get("change_info", "")
+    emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, emp_image = getEmpInfo()
     add_emp_image, emp_image = imageSetVariable(emp_image)
-    cursor, cnx = db.connectDatabase()
+    cursor, cnx = db.connect()
     dept_info = db.deptInfoData(cursor)
     edit_info, dept_select, pref_select = db.getEditEmpinfo(cursor, change_info)
-    info_update, img_update = db.setEditEmpQuery(change_info, emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, add_emp_image)
+    info_update, img_update = db.createEditEmpQuery(change_info, emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, add_emp_image)
     judge, result = db.exeEditQuery(cursor, cnx,  emp_name, emp_age, emp_sex, emp_postal, emp_pref, emp_address, emp_dept, join_date, retire_date, image_id, add_emp_image, emp_image, info_update, img_update)
     params = correctEditValue(pref_select, dept_select, dept_info, edit_info, judge, result)
     return render_template("emp_add.html", **params)
@@ -1342,9 +1325,9 @@ def correctSearchEmpValue(search_name, search_emp_id, search_dept, dept_info, em
 @app.route("/emp/search", methods=["POST"])
 def searchEmp():
     search_dept, search_emp_id, search_name = getSearchEmpInfo()
-    cursor, _ = db.connectDatabase()
+    cursor, _ = db.connect()
     dept_info = db.deptInfoData(cursor)
-    query = db.setSearchQuery(search_dept, search_emp_id, search_name)
+    query = db.createSearchQuery(search_dept, search_emp_id, search_name)
     emp_info, emp_count = db.exeSearchEmpQuery(cursor, query)
     params = correctSearchEmpValue(search_name, search_emp_id, search_dept, dept_info, emp_info, emp_count)
     return render_template("emp_search.html", **params)
@@ -1354,7 +1337,7 @@ def searchEmp():
 #csv出力
 @app.route('/emp/output', methods=["GET", "POST"])
 def outputCsv():
-    cursor, _ = db.connectDatabase()
+    cursor, _ = db.connect()
     csv = db.downloads(cursor)
     response = make_response(csv)
     response.headers["Content-Disposition"] = f"attachment; filename=employee_information.csv"
@@ -1373,10 +1356,9 @@ def getDeleteEmpInfo():
 @app.route("/emp/delete", methods=["POST"])
 def deleteEmp():
     delete_info, emp_name = getDeleteEmpInfo()
-    cursor, cnx = db.connectDatabase()
-    info_delete, img_delete = db.setDeleteEmpQuery(delete_info)
-    emp_info = db.tableDataStorage()
-    exist_info = db.comformDeleteEmpInfo(emp_info, delete_info)
+    cursor, cnx = db.connect()
+    info_delete, img_delete = db.createDeleteEmpQuery(delete_info)
+    emp_info = db.empInfoData()
     message, emp_info = db.exeDeleteEmpQuery(cursor, cnx, info_delete, img_delete, delete_info, emp_name, exist_info)
     return render_template("all_emp.html", emp_info=emp_info, message=message)
 
@@ -1386,9 +1368,9 @@ def deleteEmp():
 #ホーム画面
 @app.route("/dept", methods=["GET", "POST"])
 def deptList():
-    cursor, _ = db.connectDatabase()
+    cursor, _ = db.connect()
     dept_info = db.deptInfoData(cursor)
-    return render_template("all_dept.html", dept_info)
+    return render_template("all_dept.html", dept_info=dept_info)
 
 #ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
 
@@ -1403,9 +1385,9 @@ def getAddDeptInfo():
 @app.route("/dept/add", methods=["POST"])
 def addNewDept():
     add, dept_name = getAddDeptInfo()
-    cursor, cnx = db.connectDatabase()
+    cursor, cnx = db.connect()
     dept_info = db.deptInfoData(cursor)
-    dept_add = db.setAddDeptQuery(dept_name)
+    dept_add = db.createAddDeptQuery(dept_name)
     judge, result = db.exeAddDeptQuery(cursor, cnx, dept_name, dept_add)
     return render_template("dept_add.html", add=add, judge=judge, result=result, dept_info=dept_info)
 
@@ -1422,8 +1404,8 @@ def getChangeDeptInfo():
 @app.route("/dept/edit", methods=["POST"])
 def editDept():
     dept_name, change_info = getChangeDeptInfo()
-    cursor, cnx = db.connectDatabase()
-    dept_update = db.setEditDeptQuery(change_info, dept_name)
+    cursor, cnx = db.connect()
+    dept_update = db.createEditDeptQuery(change_info, dept_name)
     judge, result = db.exeEditDeptQuery(cursor, cnx, change_info, dept_name, dept_update)
     return render_template("dept_add.html", judge=judge, result=result, change_info=change_info, dept_name=dept_name)
 
@@ -1440,10 +1422,9 @@ def getDeleteDeptInfo():
 @app.route("/dept/delete", methods=["POST"])
 def deleteDept():
     delete_info, dept_name = getDeleteDeptInfo()
-    cursor, cnx = db.connectDatabase()
+    cursor, cnx = db.connect()
     dept_info = db.deptInfoData(cursor)
-    dept_delete = db.setDeleteDeptQuery(delete_info)
-    exist_info = db.comformDeleteInfo(dept_info, delete_info)
+    dept_delete = db.createDeleteDeptQuery(delete_info)
     message, dept_info = db.exeDeleteDeptQuery(cursor, cnx, delete_info, dept_name, dept_delete, exist_info, dept_info)
     return render_template("all_dept.html", dept_info=dept_info, message=message)
 
